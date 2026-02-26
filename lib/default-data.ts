@@ -11,6 +11,7 @@ export const defaultGameState: GameState = {
       text: 'Đâu là món quà 8/3 mà chị em phụ nữ mong muốn nhận được nhất?',
       round: 1,
       multiplier: 1,
+      timeLimit: 30,
       answers: [
         { id: 'a1', text: 'Hoa tươi', points: 35, revealed: false },
         { id: 'a2', text: 'Trang sức', points: 25, revealed: false },
@@ -24,6 +25,7 @@ export const defaultGameState: GameState = {
       text: 'Đặc điểm nào ở nam giới thu hút phái đẹp nhất từ cái nhìn đầu tiên?',
       round: 1,
       multiplier: 1,
+      timeLimit: 30,
       answers: [
         { id: 'b1', text: 'Nụ cười', points: 40, revealed: false },
         { id: 'b2', text: 'Ánh mắt', points: 30, revealed: false },
@@ -37,12 +39,4 @@ export const defaultGameState: GameState = {
   strikes: 0,
   tempScore: 0,
   showStrike: false,
-  settings: {
-    enableQuestionZoom: true,
-    questionZoomIntensity: 0.5,
-    enableSoundEffects: true,
-    soundVolume: 0.7,
-    enableScoreAnimations: true,
-    scoreAnimationIntensity: 0.5,
-  },
 };

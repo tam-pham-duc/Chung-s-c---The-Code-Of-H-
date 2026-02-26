@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useGame } from './GameProvider';
 import { Question, Answer, Team } from '@/lib/types';
-import { Settings, Users, HelpCircle, Play, X, Plus, Trash2, Save, RotateCcw, Eye, Palette, Volume2, Zap, Maximize, Sparkles } from 'lucide-react';
+import { Settings, Users, HelpCircle, Play, X, Plus, Trash2, Save, RotateCcw, Eye, Palette } from 'lucide-react';
 
 export default function AdminPanel() {
   const {
@@ -21,13 +21,13 @@ export default function AdminPanel() {
     resetGame,
   } = useGame();
 
-  const [activeTab, setActiveTab] = useState<'control' | 'teams' | 'questions' | 'settings' | 'effects'>('control');
+  const [activeTab, setActiveTab] = useState<'control' | 'teams' | 'questions' | 'settings'>('control');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Admin Settings State
   const [adminTheme, setAdminTheme] = useState('blue');
   const [adminFont, setAdminFont] = useState('font-sans');
-  const [tabOrder, setTabOrder] = useState(['control', 'teams', 'questions', 'effects', 'settings']);
+  const [tabOrder, setTabOrder] = useState(['control', 'teams', 'questions', 'settings']);
 
   // Load settings
   React.useEffect(() => {
@@ -69,7 +69,6 @@ export default function AdminPanel() {
     control: { id: 'control', label: 'Điều khiển Game', icon: <Play className="w-4 h-4" /> },
     teams: { id: 'teams', label: 'Quản lý Đội chơi', icon: <Users className="w-4 h-4" /> },
     questions: { id: 'questions', label: 'Quản lý Câu hỏi', icon: <HelpCircle className="w-4 h-4" /> },
-    effects: { id: 'effects', label: 'Hiệu ứng & Âm thanh', icon: <Sparkles className="w-4 h-4" /> },
     settings: { id: 'settings', label: 'Cài đặt Admin', icon: <Palette className="w-4 h-4" /> },
   };
 
@@ -145,7 +144,6 @@ export default function AdminPanel() {
           {activeTab === 'control' && <ControlTab themeColor={getThemeClass('bg')} />}
           {activeTab === 'teams' && <TeamsTab themeColor={getThemeClass('bg')} />}
           {activeTab === 'questions' && <QuestionsTab themeColor={getThemeClass('bg')} />}
-          {activeTab === 'effects' && <EffectsTab themeColor={getThemeClass('bg')} />}
           {activeTab === 'settings' && (
             <SettingsTab 
               adminTheme={adminTheme} setAdminTheme={setAdminTheme}
@@ -340,6 +338,7 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
       text: 'Câu hỏi mới',
       round: 1,
       multiplier: 1,
+      timeLimit: 30,
       answers: [
         { id: `a${Date.now()}-1`, text: 'Đáp án 1', points: 10, revealed: false }
       ]
@@ -372,12 +371,13 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
                 <h3 className="text-2xl md:text-4xl font-bold text-white leading-relaxed drop-shadow-md">
                   {previewQuestion.text}
                 </h3>
-                <div className="mt-4 text-pink-300 font-medium tracking-wider uppercase text-sm">
+                <div className="mt-4 text-pink-300 font-medium tracking-wider uppercase text-sm flex items-center justify-center gap-4">
                   {previewQuestion.isSuddenDeath ? (
                     <span className="text-rose-400 font-bold animate-pulse">✨ Câu hỏi phụ - Sudden Death ✨</span>
                   ) : (
-                    `Vòng ${previewQuestion.round} • Hệ số: x${previewQuestion.multiplier}`
+                    <span>Vòng {previewQuestion.round} • Hệ số: x{previewQuestion.multiplier}</span>
                   )}
+                  <span className="text-yellow-300">⏱ {previewQuestion.timeLimit || 30}s</span>
                 </div>
               </div>
 
@@ -434,6 +434,7 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
                         <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">x{q.multiplier} điểm</span>
                       </>
                     )}
+                    <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded">⏱ {q.timeLimit || 30}s</span>
                   </div>
                   <h3 className="text-lg font-medium text-gray-900">{q.text}</h3>
                   <p className="text-sm text-gray-500 mt-1">{q.answers.length} đáp án</p>
@@ -543,6 +544,18 @@ function QuestionEditor({ question, onSave, onCancel, themeColor }: { question: 
             Đánh dấu là Câu hỏi phụ (Sudden Death)
           </label>
         </div>
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian trả lời (giây)</label>
+          <input
+            type="number"
+            min="5" max="300"
+            value={edited.timeLimit || 30}
+            onChange={(e) => setEdited({ ...edited, timeLimit: parseInt(e.target.value) || 30 })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          />
+          <p className="text-xs text-gray-500 mt-1">Đặc biệt hữu ích cho chế độ Sudden Death (mặc định 30s)</p>
+        </div>
       </div>
 
       <div className="mb-4">
@@ -615,7 +628,6 @@ function SettingsTab({
     control: 'Điều khiển Game',
     teams: 'Quản lý Đội chơi',
     questions: 'Quản lý Câu hỏi',
-    effects: 'Hiệu ứng & Âm thanh',
     settings: 'Cài đặt Admin'
   };
 
@@ -698,128 +710,6 @@ function SettingsTab({
               </div>
             </div>
           ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EffectsTab({ themeColor }: { themeColor: string }) {
-  const { gameState, updateSettings } = useGame();
-  const { settings } = gameState;
-
-  return (
-    <div className="space-y-8 max-w-2xl">
-      <div>
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Tùy chỉnh Hiệu ứng & Âm thanh</h2>
-        <p className="text-sm text-gray-500 mb-6">Các cài đặt này sẽ thay đổi trực tiếp trải nghiệm trên màn hình Game của khán giả.</p>
-      </div>
-
-      {/* Question Zoom Settings */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-              <Maximize className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-800">Hiệu ứng Zoom Câu hỏi</h3>
-              <p className="text-xs text-gray-500">Phóng to câu hỏi khi mới xuất hiện</p>
-            </div>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              className="sr-only peer" 
-              checked={settings.enableQuestionZoom}
-              onChange={(e) => updateSettings({ enableQuestionZoom: e.target.checked })}
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        <div className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700">Cường độ Zoom: {Math.round(settings.questionZoomIntensity * 100)}%</label>
-          <input 
-            type="range" 
-            min="0" max="1" step="0.1"
-            value={settings.questionZoomIntensity}
-            onChange={(e) => updateSettings({ questionZoomIntensity: parseFloat(e.target.value) })}
-            disabled={!settings.enableQuestionZoom}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 disabled:opacity-30"
-          />
-        </div>
-      </div>
-
-      {/* Sound Effects Settings */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
-              <Volume2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-800">Hiệu ứng Âm thanh</h3>
-              <p className="text-xs text-gray-500">Âm thanh khi lật đáp án hoặc bấm sai</p>
-            </div>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              className="sr-only peer" 
-              checked={settings.enableSoundEffects}
-              onChange={(e) => updateSettings({ enableSoundEffects: e.target.checked })}
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-          </label>
-        </div>
-
-        <div className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700">Âm lượng: {Math.round(settings.soundVolume * 100)}%</label>
-          <input 
-            type="range" 
-            min="0" max="1" step="0.1"
-            value={settings.soundVolume}
-            onChange={(e) => updateSettings({ soundVolume: parseFloat(e.target.value) })}
-            disabled={!settings.enableSoundEffects}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600 disabled:opacity-30"
-          />
-        </div>
-      </div>
-
-      {/* Score Animation Settings */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
-              <Zap className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-800">Hiệu ứng Cập nhật Điểm</h3>
-              <p className="text-xs text-gray-500">Số nhảy và zoom khi điểm số thay đổi</p>
-            </div>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              className="sr-only peer" 
-              checked={settings.enableScoreAnimations}
-              onChange={(e) => updateSettings({ enableScoreAnimations: e.target.checked })}
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-          </label>
-        </div>
-
-        <div className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700">Cường độ Hiệu ứng: {Math.round(settings.scoreAnimationIntensity * 100)}%</label>
-          <input 
-            type="range" 
-            min="0" max="1" step="0.1"
-            value={settings.scoreAnimationIntensity}
-            onChange={(e) => updateSettings({ scoreAnimationIntensity: parseFloat(e.target.value) })}
-            disabled={!settings.enableScoreAnimations}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-600 disabled:opacity-30"
-          />
         </div>
       </div>
     </div>

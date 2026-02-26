@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Crown, Gem, Heart, Star, Sparkles, Flower2, Flame, Clock } from 'lucide-react';
 
 // Sound effect generators using Web Audio API
-const playCorrectSound = (volume: number) => {
+const playCorrectSound = () => {
   try {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
@@ -23,7 +23,7 @@ const playCorrectSound = (volume: number) => {
       osc.frequency.setValueAtTime(freq, startTime);
       
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(volume * 0.3, startTime + 0.05);
+      gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
       gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
       
       osc.start(startTime);
@@ -40,7 +40,7 @@ const playCorrectSound = (volume: number) => {
   }
 };
 
-const playWrongSound = (volume: number) => {
+const playWrongSound = () => {
   try {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
@@ -57,7 +57,7 @@ const playWrongSound = (volume: number) => {
       osc.frequency.setValueAtTime(freq, startTime);
       osc.frequency.exponentialRampToValueAtTime(freq * 0.8, startTime + duration);
       
-      gain.gain.setValueAtTime(volume * 0.3, startTime);
+      gain.gain.setValueAtTime(0.3, startTime);
       gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
       
       osc.start(startTime);
@@ -146,11 +146,11 @@ export default function GameBoard() {
   const prevQuestionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (strikes > prevStrikesRef.current && gameState.settings.enableSoundEffects) {
-      playWrongSound(gameState.settings.soundVolume);
+    if (strikes > prevStrikesRef.current) {
+      playWrongSound();
     }
     prevStrikesRef.current = strikes;
-  }, [strikes, gameState.settings]);
+  }, [strikes]);
 
   useEffect(() => {
     const currentRevealedCount = currentQuestion?.answers.filter(a => a.revealed).length || 0;
@@ -161,18 +161,16 @@ export default function GameBoard() {
       prevRevealedCountRef.current = currentRevealedCount;
     } else if (currentRevealedCount > prevRevealedCountRef.current) {
       // New answer revealed
-      if (gameState.settings.enableSoundEffects) {
-        playCorrectSound(gameState.settings.soundVolume);
-      }
+      playCorrectSound();
       prevRevealedCountRef.current = currentRevealedCount;
     }
-  }, [currentQuestion, gameState.settings]);
+  }, [currentQuestion]);
 
   useEffect(() => {
     if (currentQuestion?.isSuddenDeath && introPlayedFor !== currentQuestion.id) {
       const timer = setTimeout(() => {
         setIntroPlayedFor(currentQuestion.id);
-        setTimeLeft(30);
+        setTimeLeft(currentQuestion.timeLimit || 30);
       }, 4000);
       return () => clearTimeout(timer);
     }
@@ -278,7 +276,7 @@ export default function GameBoard() {
           <h3 className="text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide">{teams[0].name}</h3>
           <motion.div 
             key={teams[0].score}
-            initial={gameState.settings.enableScoreAnimations ? { scale: 1 + (gameState.settings.scoreAnimationIntensity * 0.5), color: '#fcd34d' } : {}}
+            initial={{ scale: 1.5, color: '#fcd34d' }}
             animate={{ scale: 1, color: '#facc15' }}
             transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
             className="text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
@@ -291,18 +289,14 @@ export default function GameBoard() {
         <div className="flex flex-col items-center justify-center">
           <motion.div 
             key={tempScore}
-            initial={gameState.settings.enableScoreAnimations ? { 
-              scale: 1 + (gameState.settings.scoreAnimationIntensity * 0.3), 
-              borderColor: '#fcd34d', 
-              boxShadow: `0 0 ${40 + (gameState.settings.scoreAnimationIntensity * 40)}px rgba(250,204,21,0.8)` 
-            } : {}}
+            initial={{ scale: 1.3, borderColor: '#fcd34d', boxShadow: '0 0 60px rgba(250,204,21,0.8)' }}
             animate={{ scale: 1, borderColor: 'rgba(250,204,21,0.8)', boxShadow: '0 0 40px rgba(250,204,21,0.4)' }}
             transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
             className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 rounded-full w-32 h-32 flex items-center justify-center"
           >
             <motion.span 
               key={`text-${tempScore}`}
-              initial={gameState.settings.enableScoreAnimations ? { scale: 1 + (gameState.settings.scoreAnimationIntensity * 0.2), color: '#fcd34d' } : {}}
+              initial={{ scale: 1.2, color: '#fcd34d' }}
               animate={{ scale: 1, color: '#ffffff' }}
               transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
               className="text-6xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
@@ -318,7 +312,7 @@ export default function GameBoard() {
           <h3 className="text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide">{teams[1].name}</h3>
           <motion.div 
             key={teams[1].score}
-            initial={gameState.settings.enableScoreAnimations ? { scale: 1 + (gameState.settings.scoreAnimationIntensity * 0.5), color: '#fcd34d' } : {}}
+            initial={{ scale: 1.5, color: '#fcd34d' }}
             animate={{ scale: 1, color: '#facc15' }}
             transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
             className="text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
@@ -331,13 +325,13 @@ export default function GameBoard() {
       {/* Question */}
       <motion.div 
         key={currentQuestion.id}
-        initial={{ opacity: 0, scale: gameState.settings.enableQuestionZoom ? (1 - gameState.settings.questionZoomIntensity * 0.4) : 1 }}
+        initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, type: 'spring', bounce: 0.4 }}
         className="z-10 w-full max-w-4xl bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 mb-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
       >
         <motion.h3 
-          initial={gameState.settings.enableQuestionZoom ? { scale: 1 - (gameState.settings.questionZoomIntensity * 0.2) } : {}}
+          initial={{ scale: 0.9 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.8, type: 'spring', bounce: 0.5, delay: 0.2 }}
           className="text-2xl md:text-4xl font-bold text-white leading-relaxed drop-shadow-md"

@@ -44,13 +44,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Save to localStorage on change
   useEffect(() => {
     if (isLoaded) {
-      const currentStateString = JSON.stringify(gameState);
-      const savedStateString = localStorage.getItem('chungSucGameState');
-      // Only write to localStorage if the state has actually changed
-      // This prevents an infinite loop of storage events between tabs
-      if (currentStateString !== savedStateString) {
-        localStorage.setItem('chungSucGameState', currentStateString);
-      }
+      localStorage.setItem('chungSucGameState', JSON.stringify(gameState));
     }
   }, [gameState, isLoaded]);
 

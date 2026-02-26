@@ -1,9 +1,76 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGame } from './GameProvider';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Crown, Gem, Heart, Star, Sparkles, Flower2, Flame, Clock } from 'lucide-react';
+
+// Sound effect generators using Web Audio API
+const playCorrectSound = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    // Play a magical chime sound (Giải Mã Phái Đẹp theme)
+    const playNote = (freq: number, startTime: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+      
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = ctx.currentTime;
+    playNote(523.25, now, 0.4); // C5
+    playNote(659.25, now + 0.1, 0.4); // E5
+    playNote(783.99, now + 0.2, 0.6); // G5
+    playNote(1046.50, now + 0.3, 1.0); // C6
+  } catch (e) {
+    console.error('Audio playback failed', e);
+  }
+};
+
+const playWrongSound = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    // Play a dramatic buzzer sound
+    const playBuzzer = (freq: number, startTime: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, startTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.8, startTime + duration);
+      
+      gain.gain.setValueAtTime(0.3, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = ctx.currentTime;
+    playBuzzer(150, now, 0.4);
+    playBuzzer(140, now + 0.1, 0.5);
+  } catch (e) {
+    console.error('Audio playback failed', e);
+  }
+};
 
 // Helper function to get theme colors and icons based on answer rank
 const getAnswerTheme = (index: number) => {
@@ -72,6 +139,32 @@ export default function GameBoard() {
 
   const [introPlayedFor, setIntroPlayedFor] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
+
+  // Refs for tracking changes to play sounds
+  const prevStrikesRef = useRef(strikes);
+  const prevRevealedCountRef = useRef(0);
+  const prevQuestionIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (strikes > prevStrikesRef.current) {
+      playWrongSound();
+    }
+    prevStrikesRef.current = strikes;
+  }, [strikes]);
+
+  useEffect(() => {
+    const currentRevealedCount = currentQuestion?.answers.filter(a => a.revealed).length || 0;
+    
+    if (currentQuestion?.id !== prevQuestionIdRef.current) {
+      // Question changed, reset tracking
+      prevQuestionIdRef.current = currentQuestion?.id || null;
+      prevRevealedCountRef.current = currentRevealedCount;
+    } else if (currentRevealedCount > prevRevealedCountRef.current) {
+      // New answer revealed
+      playCorrectSound();
+      prevRevealedCountRef.current = currentRevealedCount;
+    }
+  }, [currentQuestion]);
 
   useEffect(() => {
     if (currentQuestion?.isSuddenDeath && introPlayedFor !== currentQuestion.id) {
@@ -181,22 +274,35 @@ export default function GameBoard() {
         {/* Team 1 */}
         <div className="flex flex-col items-center bg-white/10 backdrop-blur-md border-2 border-pink-300/30 rounded-2xl p-4 min-w-[200px] shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
           <h3 className="text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide">{teams[0].name}</h3>
-          <div className="text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          <motion.div 
+            key={teams[0].score}
+            initial={{ scale: 1.5, color: '#fcd34d' }}
+            animate={{ scale: 1, color: '#facc15' }}
+            transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
+            className="text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+          >
             {teams[0].score}
-          </div>
+          </motion.div>
         </div>
 
         {/* Current Points */}
         <div className="flex flex-col items-center justify-center">
           <motion.div 
             key={tempScore}
-            initial={{ scale: 1.2, color: '#fcd34d' }}
-            animate={{ scale: 1, color: '#ffffff' }}
-            className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 border-yellow-400/80 rounded-full w-32 h-32 flex items-center justify-center shadow-[0_0_40px_rgba(250,204,21,0.4)]"
+            initial={{ scale: 1.3, borderColor: '#fcd34d', boxShadow: '0 0 60px rgba(250,204,21,0.8)' }}
+            animate={{ scale: 1, borderColor: 'rgba(250,204,21,0.8)', boxShadow: '0 0 40px rgba(250,204,21,0.4)' }}
+            transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
+            className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 rounded-full w-32 h-32 flex items-center justify-center"
           >
-            <span className="text-6xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            <motion.span 
+              key={`text-${tempScore}`}
+              initial={{ scale: 1.2, color: '#fcd34d' }}
+              animate={{ scale: 1, color: '#ffffff' }}
+              transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
+              className="text-6xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+            >
               {tempScore}
-            </span>
+            </motion.span>
           </motion.div>
           <div className="mt-3 text-yellow-400/90 font-bold text-sm tracking-[0.2em] uppercase">Điểm Tích Lũy</div>
         </div>
@@ -204,23 +310,34 @@ export default function GameBoard() {
         {/* Team 2 */}
         <div className="flex flex-col items-center bg-white/10 backdrop-blur-md border-2 border-pink-300/30 rounded-2xl p-4 min-w-[200px] shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
           <h3 className="text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide">{teams[1].name}</h3>
-          <div className="text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          <motion.div 
+            key={teams[1].score}
+            initial={{ scale: 1.5, color: '#fcd34d' }}
+            animate={{ scale: 1, color: '#facc15' }}
+            transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
+            className="text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+          >
             {teams[1].score}
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Question */}
       <motion.div 
         key={currentQuestion.id}
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.6, type: 'spring', bounce: 0.4 }}
         className="z-10 w-full max-w-4xl bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 mb-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
       >
-        <h3 className="text-2xl md:text-4xl font-bold text-white leading-relaxed drop-shadow-md">
+        <motion.h3 
+          initial={{ scale: 0.9 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.8, type: 'spring', bounce: 0.5, delay: 0.2 }}
+          className="text-2xl md:text-4xl font-bold text-white leading-relaxed drop-shadow-md"
+        >
           {currentQuestion.text}
-        </h3>
+        </motion.h3>
         <div className="mt-4 text-pink-300 font-medium tracking-wider uppercase text-sm">
           {currentQuestion.isSuddenDeath ? (
             <span className="text-rose-400 font-bold animate-pulse">✨ Câu hỏi phụ - Sudden Death ✨</span>

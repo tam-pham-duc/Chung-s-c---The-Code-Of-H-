@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useGame } from './GameProvider';
 import { Question, Answer, Team } from '@/lib/types';
-import { Settings, Users, HelpCircle, Play, X, Plus, Trash2, Save, RotateCcw } from 'lucide-react';
+import { Settings, Users, HelpCircle, Play, X, Plus, Trash2, Save, RotateCcw, Eye, Palette } from 'lucide-react';
 
 export default function AdminPanel() {
   const {
@@ -21,16 +21,59 @@ export default function AdminPanel() {
     resetGame,
   } = useGame();
 
-  const [activeTab, setActiveTab] = useState<'control' | 'teams' | 'questions'>('control');
+  const [activeTab, setActiveTab] = useState<'control' | 'teams' | 'questions' | 'settings'>('control');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // Admin Settings State
+  const [adminTheme, setAdminTheme] = useState('blue');
+  const [adminFont, setAdminFont] = useState('font-sans');
+  const [tabOrder, setTabOrder] = useState(['control', 'teams', 'questions', 'settings']);
+
+  // Load settings
+  React.useEffect(() => {
+    const saved = localStorage.getItem('chungSucAdminSettings');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.adminTheme) setAdminTheme(parsed.adminTheme);
+        if (parsed.adminFont) setAdminFont(parsed.adminFont);
+        if (parsed.tabOrder) setTabOrder(parsed.tabOrder);
+      } catch (e) {}
+    }
+  }, []);
+
+  // Save settings
+  React.useEffect(() => {
+    localStorage.setItem('chungSucAdminSettings', JSON.stringify({ adminTheme, adminFont, tabOrder }));
+  }, [adminTheme, adminFont, tabOrder]);
 
   const handleResetConfirm = () => {
     resetGame();
     setShowResetConfirm(false);
   };
 
+  const themeColors: Record<string, string> = {
+    blue: 'bg-blue-600 text-blue-600 border-blue-600 hover:bg-blue-700 hover:text-blue-700',
+    purple: 'bg-purple-600 text-purple-600 border-purple-600 hover:bg-purple-700 hover:text-purple-700',
+    emerald: 'bg-emerald-600 text-emerald-600 border-emerald-600 hover:bg-emerald-700 hover:text-emerald-700',
+    rose: 'bg-rose-600 text-rose-600 border-rose-600 hover:bg-rose-700 hover:text-rose-700',
+  };
+
+  const getThemeClass = (type: 'bg' | 'text' | 'border') => {
+    const classes = themeColors[adminTheme] || themeColors.blue;
+    const parts = classes.split(' ');
+    return parts.find(p => p.startsWith(type)) || '';
+  };
+
+  const tabConfig = {
+    control: { id: 'control', label: 'Điều khiển Game', icon: <Play className="w-4 h-4" /> },
+    teams: { id: 'teams', label: 'Quản lý Đội chơi', icon: <Users className="w-4 h-4" /> },
+    questions: { id: 'questions', label: 'Quản lý Câu hỏi', icon: <HelpCircle className="w-4 h-4" /> },
+    settings: { id: 'settings', label: 'Cài đặt Admin', icon: <Palette className="w-4 h-4" /> },
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6 font-sans">
+    <div className={`min-h-screen bg-gray-100 p-6 ${adminFont}`}>
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -75,39 +118,47 @@ export default function AdminPanel() {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 bg-gray-50">
-          <button
-            className={`flex-1 py-4 px-6 text-sm font-medium flex items-center justify-center gap-2 ${activeTab === 'control' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-            onClick={() => setActiveTab('control')}
-          >
-            <Play className="w-4 h-4" /> Điều khiển Game
-          </button>
-          <button
-            className={`flex-1 py-4 px-6 text-sm font-medium flex items-center justify-center gap-2 ${activeTab === 'teams' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-            onClick={() => setActiveTab('teams')}
-          >
-            <Users className="w-4 h-4" /> Quản lý Đội chơi
-          </button>
-          <button
-            className={`flex-1 py-4 px-6 text-sm font-medium flex items-center justify-center gap-2 ${activeTab === 'questions' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-            onClick={() => setActiveTab('questions')}
-          >
-            <HelpCircle className="w-4 h-4" /> Quản lý Câu hỏi
-          </button>
+        <div className="flex border-b border-gray-200 bg-gray-50 overflow-x-auto">
+          {tabOrder.map(tabId => {
+            const tab = tabConfig[tabId as keyof typeof tabConfig];
+            if (!tab) return null;
+            const isActive = activeTab === tabId;
+            return (
+              <button
+                key={tabId}
+                className={`flex-1 py-4 px-6 text-sm font-medium flex items-center justify-center gap-2 whitespace-nowrap ${
+                  isActive 
+                    ? `bg-white border-b-2 ${getThemeClass('border')} ${getThemeClass('text')}` 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setActiveTab(tabId as any)}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === 'control' && <ControlTab />}
-          {activeTab === 'teams' && <TeamsTab />}
-          {activeTab === 'questions' && <QuestionsTab />}
+          {activeTab === 'control' && <ControlTab themeColor={getThemeClass('bg')} />}
+          {activeTab === 'teams' && <TeamsTab themeColor={getThemeClass('bg')} />}
+          {activeTab === 'questions' && <QuestionsTab themeColor={getThemeClass('bg')} />}
+          {activeTab === 'settings' && (
+            <SettingsTab 
+              adminTheme={adminTheme} setAdminTheme={setAdminTheme}
+              adminFont={adminFont} setAdminFont={setAdminFont}
+              tabOrder={tabOrder} setTabOrder={setTabOrder}
+              themeColor={getThemeClass('bg')}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function ControlTab() {
+function ControlTab({ themeColor }: { themeColor: string }) {
   const { gameState, revealAnswer, addStrike, clearStrikes, awardPoints, nextQuestion, prevQuestion } = useGame();
   const { questions, currentQuestionIndex, teams, tempScore, strikes } = gameState;
   const currentQuestion = questions[currentQuestionIndex];
@@ -159,7 +210,7 @@ function ControlTab() {
                   className={`px-4 py-1.5 rounded font-medium text-sm transition-colors ${
                     answer.revealed 
                       ? 'bg-green-100 text-green-700 cursor-not-allowed' 
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : `${themeColor} text-white`
                   }`}
                 >
                   {answer.revealed ? 'Đã lật' : 'Lật đáp án'}
@@ -200,14 +251,14 @@ function ControlTab() {
             <button 
               onClick={() => awardPoints(teams[0].id)}
               disabled={tempScore === 0}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`flex-1 py-3 ${themeColor} text-white rounded-lg font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               Cộng cho {teams[0].name}
             </button>
             <button 
               onClick={() => awardPoints(teams[1].id)}
               disabled={tempScore === 0}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`flex-1 py-3 ${themeColor} text-white rounded-lg font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               Cộng cho {teams[1].name}
             </button>
@@ -218,7 +269,7 @@ function ControlTab() {
   );
 }
 
-function TeamsTab() {
+function TeamsTab({ themeColor }: { themeColor: string }) {
   const { gameState, updateTeam } = useGame();
 
   return (
@@ -276,9 +327,10 @@ function TeamsTab() {
   );
 }
 
-function QuestionsTab() {
+function QuestionsTab({ themeColor }: { themeColor: string }) {
   const { gameState, updateQuestion, addQuestion, deleteQuestion } = useGame();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
 
   const handleAddQuestion = () => {
     const newQ: Question = {
@@ -296,11 +348,59 @@ function QuestionsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Preview Modal */}
+      {previewQuestion && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-950 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl relative border border-white/20">
+            <button 
+              onClick={() => setPreviewQuestion(null)}
+              className="absolute top-4 right-4 z-10 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            <div className="p-8">
+              <div className="text-center mb-6">
+                <span className="px-3 py-1 bg-white/20 text-white rounded-full text-xs font-bold uppercase tracking-wider">
+                  Xem trước giao diện
+                </span>
+              </div>
+              
+              <div className="w-full bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 mb-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+                <h3 className="text-2xl md:text-4xl font-bold text-white leading-relaxed drop-shadow-md">
+                  {previewQuestion.text}
+                </h3>
+                <div className="mt-4 text-pink-300 font-medium tracking-wider uppercase text-sm">
+                  {previewQuestion.isSuddenDeath ? (
+                    <span className="text-rose-400 font-bold animate-pulse">✨ Câu hỏi phụ - Sudden Death ✨</span>
+                  ) : (
+                    `Vòng ${previewQuestion.round} • Hệ số: x${previewQuestion.multiplier}`
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {previewQuestion.answers.map((answer, idx) => (
+                  <div key={answer.id} className="h-16 bg-gradient-to-r from-indigo-800/80 to-purple-800/80 backdrop-blur-sm border border-white/20 rounded-xl flex items-center shadow-lg">
+                    <div className="w-12 h-12 ml-2 rounded-full bg-white/10 border border-white/30 flex items-center justify-center text-xl font-bold text-white/90 shadow-inner">
+                      {idx + 1}
+                    </div>
+                    <div className="flex-grow px-4 text-white/50 italic text-sm">
+                      (Đã ẩn: {answer.text} - {answer.points} điểm)
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-800">Danh sách câu hỏi</h2>
         <button
           onClick={handleAddQuestion}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2"
+          className={`px-4 py-2 ${themeColor} text-white rounded-lg font-medium flex items-center gap-2`}
         >
           <Plus className="w-4 h-4" /> Thêm câu hỏi
         </button>
@@ -317,6 +417,7 @@ function QuestionsTab() {
                   setEditingId(null);
                 }}
                 onCancel={() => setEditingId(null)}
+                themeColor={themeColor}
               />
             ) : (
               <div className="p-4 flex items-start justify-between">
@@ -337,6 +438,13 @@ function QuestionsTab() {
                 </div>
                 <div className="flex gap-2">
                   <button
+                    onClick={() => setPreviewQuestion(q)}
+                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded flex items-center justify-center"
+                    title="Xem trước"
+                  >
+                    <Eye className="w-5 h-5" />
+                  </button>
+                  <button
                     onClick={() => setEditingId(q.id)}
                     className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm font-medium"
                   >
@@ -347,6 +455,7 @@ function QuestionsTab() {
                       if(confirm('Xóa câu hỏi này?')) deleteQuestion(q.id);
                     }}
                     className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                    title="Xóa"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
@@ -360,7 +469,7 @@ function QuestionsTab() {
   );
 }
 
-function QuestionEditor({ question, onSave, onCancel }: { question: Question, onSave: (q: Partial<Question>) => void, onCancel: () => void }) {
+function QuestionEditor({ question, onSave, onCancel, themeColor }: { question: Question, onSave: (q: Partial<Question>) => void, onCancel: () => void, themeColor: string }) {
   const [edited, setEdited] = useState<Question>({ ...question });
 
   const handleAnswerChange = (index: number, field: keyof Answer, value: any) => {
@@ -472,9 +581,121 @@ function QuestionEditor({ question, onSave, onCancel }: { question: Question, on
         <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
           Hủy
         </button>
-        <button onClick={() => onSave(edited)} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2">
+        <button onClick={() => onSave(edited)} className={`px-4 py-2 text-sm font-medium text-white ${themeColor} rounded-md flex items-center gap-2`}>
           <Save className="w-4 h-4" /> Lưu thay đổi
         </button>
+      </div>
+    </div>
+  );
+}
+
+function SettingsTab({ 
+  adminTheme, setAdminTheme, 
+  adminFont, setAdminFont, 
+  tabOrder, setTabOrder,
+  themeColor
+}: { 
+  adminTheme: string, setAdminTheme: (v: string) => void,
+  adminFont: string, setAdminFont: (v: string) => void,
+  tabOrder: string[], setTabOrder: (v: string[]) => void,
+  themeColor: string
+}) {
+  const moveTab = (index: number, direction: -1 | 1) => {
+    const newOrder = [...tabOrder];
+    const targetIndex = index + direction;
+    if (targetIndex >= 0 && targetIndex < newOrder.length) {
+      [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
+      setTabOrder(newOrder);
+    }
+  };
+
+  const tabLabels: Record<string, string> = {
+    control: 'Điều khiển Game',
+    teams: 'Quản lý Đội chơi',
+    questions: 'Quản lý Câu hỏi',
+    settings: 'Cài đặt Admin'
+  };
+
+  return (
+    <div className="space-y-8 max-w-2xl">
+      <div>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Tùy chỉnh Giao diện Admin</h2>
+        <p className="text-sm text-gray-500 mb-6">Các cài đặt này chỉ áp dụng cho Bảng Điều Khiển của bạn, không ảnh hưởng đến màn hình Game của khán giả.</p>
+      </div>
+
+      {/* Theme Color */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <h3 className="font-bold text-gray-800 mb-4">Màu sắc chủ đạo</h3>
+        <div className="flex gap-4">
+          {[
+            { id: 'blue', color: 'bg-blue-600', label: 'Xanh dương' },
+            { id: 'purple', color: 'bg-purple-600', label: 'Tím' },
+            { id: 'emerald', color: 'bg-emerald-600', label: 'Xanh ngọc' },
+            { id: 'rose', color: 'bg-rose-600', label: 'Hồng đỏ' },
+          ].map(theme => (
+            <button
+              key={theme.id}
+              onClick={() => setAdminTheme(theme.id)}
+              className={`flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all ${
+                adminTheme === theme.id ? 'border-gray-800 scale-105' : 'border-transparent hover:bg-gray-50'
+              }`}
+            >
+              <div className={`w-12 h-12 rounded-full ${theme.color} shadow-inner`}></div>
+              <span className="text-sm font-medium text-gray-700">{theme.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Font Family */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <h3 className="font-bold text-gray-800 mb-4">Font chữ</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { id: 'font-sans', label: 'Mặc định (Sans)', desc: 'Rõ ràng, hiện đại' },
+            { id: 'font-serif', label: 'Cổ điển (Serif)', desc: 'Sang trọng, truyền thống' },
+            { id: 'font-mono', label: 'Lập trình (Mono)', desc: 'Kỹ thuật, góc cạnh' },
+          ].map(font => (
+            <button
+              key={font.id}
+              onClick={() => setAdminFont(font.id)}
+              className={`p-4 rounded-lg border-2 text-left transition-all ${font.id} ${
+                adminFont === font.id ? `border-gray-800 bg-gray-50` : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className="font-bold text-gray-900">{font.label}</div>
+              <div className="text-xs text-gray-500 mt-1">{font.desc}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab Order */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <h3 className="font-bold text-gray-800 mb-4">Sắp xếp thứ tự Tab</h3>
+        <div className="space-y-2">
+          {tabOrder.map((tabId, index) => (
+            <div key={tabId} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <span className="font-medium text-gray-700">{index + 1}. {tabLabels[tabId]}</span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => moveTab(index, -1)}
+                  disabled={index === 0}
+                  className="p-1 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded disabled:opacity-30"
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={() => moveTab(index, 1)}
+                  disabled={index === tabOrder.length - 1}
+                  className="p-1 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded disabled:opacity-30"
+                >
+                  ▼
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

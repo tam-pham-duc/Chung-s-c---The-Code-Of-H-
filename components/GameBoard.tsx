@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from './GameProvider';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Crown, Gem, Heart, Star, Sparkles, Flower2 } from 'lucide-react';
+import { X, Crown, Gem, Heart, Star, Sparkles, Flower2, Flame, Clock } from 'lucide-react';
 
 // Helper function to get theme colors and icons based on answer rank
 const getAnswerTheme = (index: number) => {
@@ -70,8 +70,60 @@ export default function GameBoard() {
   const { teams, questions, currentQuestionIndex, strikes, tempScore, showStrike } = gameState;
   const currentQuestion = questions[currentQuestionIndex];
 
+  const [introPlayedFor, setIntroPlayedFor] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(30);
+
+  useEffect(() => {
+    if (currentQuestion?.isSuddenDeath && introPlayedFor !== currentQuestion.id) {
+      const timer = setTimeout(() => {
+        setIntroPlayedFor(currentQuestion.id);
+        setTimeLeft(30);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestion, introPlayedFor]);
+
+  useEffect(() => {
+    if (currentQuestion?.isSuddenDeath && introPlayedFor === currentQuestion.id && timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(t => t - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestion, introPlayedFor, timeLeft]);
+
   if (!currentQuestion) {
     return <div className="flex items-center justify-center h-screen text-white text-2xl">Chưa có câu hỏi nào</div>;
+  }
+
+  // Show Sudden Death Intro Screen
+  if (currentQuestion.isSuddenDeath && introPlayedFor !== currentQuestion.id) {
+    return (
+      <div className="relative flex flex-col items-center justify-center min-h-screen bg-rose-950 overflow-hidden font-sans">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-40 pointer-events-none mix-blend-overlay"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-600/40 via-transparent to-transparent pointer-events-none"></div>
+        
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1, type: 'spring', bounce: 0.5 }}
+          className="z-10 flex flex-col items-center text-center"
+        >
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 0.5, repeat: Infinity }}
+            className="mb-8"
+          >
+            <Flame className="w-40 h-40 text-rose-500 drop-shadow-[0_0_50px_rgba(244,63,94,0.8)]" />
+          </motion.div>
+          
+          <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-rose-300 to-red-600 drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] tracking-widest uppercase mb-4">
+            SUDDEN DEATH
+          </h1>
+          <h2 className="text-3xl md:text-4xl font-bold text-rose-200 tracking-[0.3em] uppercase drop-shadow-lg">
+            CÂU HỎI QUYẾT ĐỊNH
+          </h2>
+        </motion.div>
+      </div>
+    );
   }
 
   // Ensure we always show an even number of slots (e.g., 8 slots max)
@@ -81,30 +133,47 @@ export default function GameBoard() {
     displayAnswers.push({ id: `empty-${displayAnswers.length}`, text: '', points: 0, revealed: false });
   }
 
+  const isSuddenDeathActive = currentQuestion.isSuddenDeath && introPlayedFor === currentQuestion.id;
+
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-950 overflow-hidden font-sans">
+    <div className={`relative flex flex-col items-center justify-center min-h-screen overflow-hidden font-sans transition-colors duration-1000 ${isSuddenDeathActive ? 'bg-gradient-to-br from-rose-950 via-red-900 to-orange-950' : 'bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-950'}`}>
       {/* Background decorations */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 pointer-events-none mix-blend-overlay"></div>
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-500/20 via-transparent to-transparent pointer-events-none"></div>
-      <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-purple-500/20 via-transparent to-transparent pointer-events-none"></div>
+      <div className={`absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] pointer-events-none ${isSuddenDeathActive ? 'from-red-500/20' : 'from-pink-500/20'} via-transparent to-transparent`}></div>
+      <div className={`absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] pointer-events-none ${isSuddenDeathActive ? 'from-orange-500/20' : 'from-purple-500/20'} via-transparent to-transparent`}></div>
 
-      {/* Header */}
-      <div className="z-10 text-center mb-8 mt-4">
-        <motion.h1 
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-500 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-wider uppercase"
-        >
-          CHUNG SỨC
-        </motion.h1>
-        <motion.h2 
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="text-xl md:text-2xl font-bold text-pink-100 drop-shadow-md mt-2 tracking-widest uppercase"
-        >
-          Giải Mã Phái Đẹp
-        </motion.h2>
+      {/* Header & Timer */}
+      <div className="z-10 flex flex-col items-center mb-8 mt-4 w-full px-8">
+        {isSuddenDeathActive && (
+          <motion.div 
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="absolute top-8 flex items-center gap-4 bg-black/40 backdrop-blur-md border border-rose-500/50 px-8 py-3 rounded-full shadow-[0_0_30px_rgba(244,63,94,0.3)]"
+          >
+            <Clock className={`w-8 h-8 ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-300'}`} />
+            <span className={`text-5xl font-black tracking-widest ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-100'}`}>
+              {timeLeft}
+            </span>
+          </motion.div>
+        )}
+
+        <div className={`text-center ${isSuddenDeathActive ? 'mt-20' : ''}`}>
+          <motion.h1 
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-500 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-wider uppercase"
+          >
+            CHUNG SỨC
+          </motion.h1>
+          <motion.h2 
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="text-xl md:text-2xl font-bold text-pink-100 drop-shadow-md mt-2 tracking-widest uppercase"
+          >
+            Giải Mã Phái Đẹp
+          </motion.h2>
+        </div>
       </div>
 
       {/* Scoreboard */}

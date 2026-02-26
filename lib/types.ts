@@ -21,6 +21,15 @@ export interface Team {
   score: number;
 }
 
+export interface EffectSettings {
+  enableQuestionZoom: boolean;
+  questionZoomIntensity: number; // 0 to 1
+  enableSoundEffects: boolean;
+  soundVolume: number; // 0 to 1
+  enableScoreAnimations: boolean;
+  scoreAnimationIntensity: number; // 0 to 1
+}
+
 export interface GameState {
   teams: Team[];
   questions: Question[];
@@ -28,4 +37,5 @@ export interface GameState {
   strikes: number;
   tempScore: number;
   showStrike: boolean;
+  settings: EffectSettings;
 }

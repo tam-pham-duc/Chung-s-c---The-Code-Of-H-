@@ -37,4 +37,12 @@ export const defaultGameState: GameState = {
   strikes: 0,
   tempScore: 0,
   showStrike: false,
+  settings: {
+    enableQuestionZoom: true,
+    questionZoomIntensity: 0.5,
+    enableSoundEffects: true,
+    soundVolume: 0.7,
+    enableScoreAnimations: true,
+    scoreAnimationIntensity: 0.5,
+  },
 };

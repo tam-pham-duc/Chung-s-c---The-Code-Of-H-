@@ -167,8 +167,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetGame = () => {
-    setGameState(defaultGameState);
-    localStorage.removeItem('chungSucGameState');
+    setGameState((prev) => {
+      const resetQuestions = prev.questions.map(q => ({
+        ...q,
+        answers: q.answers.map(a => ({ ...a, revealed: false }))
+      }));
+
+      const resetTeams = prev.teams.map(t => ({ ...t, score: 0 }));
+
+      return {
+        ...prev,
+        teams: resetTeams,
+        questions: resetQuestions,
+        currentQuestionIndex: 0,
+        strikes: 0,
+        showStrike: false,
+        tempScore: 0,
+        round: 1,
+      };
+    });
   };
 
   if (!isLoaded) {

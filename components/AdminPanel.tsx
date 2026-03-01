@@ -159,18 +159,39 @@ export default function AdminPanel() {
 }
 
 function ControlTab({ themeColor }: { themeColor: string }) {
-  const { gameState, revealAnswer, addStrike, clearStrikes, awardPoints, nextQuestion, prevQuestion } = useGame();
-  const { questions, currentQuestionIndex, teams, tempScore, strikes } = gameState;
+  const { gameState, revealAnswer, addStrike, clearStrikes, awardPoints, nextQuestion, prevQuestion, updateGameState } = useGame();
+  const { questions, currentQuestionIndex, teams, tempScore, strikes, controllingTeamId, stealingTeamId, isStealing } = gameState;
   const currentQuestion = questions[currentQuestionIndex];
 
   if (!currentQuestion) return <div>Chưa có câu hỏi</div>;
+
+  const handleSetControllingTeam = (teamId: string | null) => {
+    updateGameState({ controllingTeamId: teamId, strikes: 0, isStealing: false, stealingTeamId: null });
+  };
+
+  const handleStartSteal = () => {
+    if (!controllingTeamId) return;
+    const stealingTeam = teams.find(t => t.id !== controllingTeamId);
+    if (stealingTeam) {
+      updateGameState({ isStealing: true, stealingTeamId: stealingTeam.id });
+    }
+  };
+
+  const handleStealResult = (success: boolean) => {
+    if (success && stealingTeamId) {
+      awardPoints(stealingTeamId);
+    } else if (!success && controllingTeamId) {
+      awardPoints(controllingTeamId);
+    }
+    updateGameState({ isStealing: false, controllingTeamId: null, stealingTeamId: null, strikes: 0 });
+  };
 
   return (
     <div className="space-y-8">
       {/* Navigation & Status */}
       <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-100">
         <button
-          onClick={prevQuestion}
+          onClick={() => { prevQuestion(); handleSetControllingTeam(null); }}
           disabled={currentQuestionIndex === 0}
           className="px-4 py-2 bg-white border border-gray-300 rounded shadow-sm disabled:opacity-50 hover:bg-gray-50"
         >
@@ -181,12 +202,79 @@ function ControlTab({ themeColor }: { themeColor: string }) {
           <div className="text-lg font-bold text-blue-900">Vòng {currentQuestion.round} (x{currentQuestion.multiplier})</div>
         </div>
         <button
-          onClick={nextQuestion}
+          onClick={() => { nextQuestion(); handleSetControllingTeam(null); }}
           disabled={currentQuestionIndex === questions.length - 1}
           className="px-4 py-2 bg-white border border-gray-300 rounded shadow-sm disabled:opacity-50 hover:bg-gray-50"
         >
           Câu tiếp
         </button>
+      </div>
+
+      {/* Control & Steal Phase */}
+      <div className="bg-purple-50 p-6 rounded-lg border border-purple-100">
+        <h3 className="text-lg font-bold text-purple-800 mb-4">Quyền kiểm soát & Cướp điểm</h3>
+        
+        {!isStealing ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <span className="font-medium text-gray-700">Đội giành quyền:</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleSetControllingTeam(null)}
+                  className={`px-4 py-2 rounded font-medium transition-colors ${!controllingTeamId ? 'bg-gray-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                >
+                  Chưa chọn
+                </button>
+                {teams.map(team => (
+                  <button
+                    key={team.id}
+                    onClick={() => handleSetControllingTeam(team.id)}
+                    className={`px-4 py-2 rounded font-medium transition-colors ${controllingTeamId === team.id ? `${themeColor} text-white` : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    {team.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {controllingTeamId && strikes >= 3 && (
+              <div className="mt-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-yellow-800">Đã sai 3 lần!</h4>
+                  <p className="text-sm text-yellow-700">Đội đối phương có quyền hội ý và cướp điểm.</p>
+                </div>
+                <button
+                  onClick={handleStartSteal}
+                  className="px-6 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded shadow-sm"
+                >
+                  Bắt đầu Cướp điểm
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="p-4 bg-orange-100 border border-orange-300 rounded-lg">
+            <h4 className="font-bold text-orange-800 mb-2">Giai đoạn Cướp điểm</h4>
+            <p className="text-sm text-orange-700 mb-4">
+              Đội <strong className="text-orange-900">{teams.find(t => t.id === stealingTeamId)?.name}</strong> đang trả lời. 
+              Nếu đúng, họ sẽ cướp toàn bộ {tempScore} điểm. Nếu sai, điểm thuộc về đội {teams.find(t => t.id === controllingTeamId)?.name}.
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => handleStealResult(true)}
+                className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded shadow-sm"
+              >
+                Cướp Thành Công (Cộng cho {teams.find(t => t.id === stealingTeamId)?.name})
+              </button>
+              <button
+                onClick={() => handleStealResult(false)}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded shadow-sm"
+              >
+                Cướp Thất Bại (Cộng cho {teams.find(t => t.id === controllingTeamId)?.name})
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Current Question Info */}

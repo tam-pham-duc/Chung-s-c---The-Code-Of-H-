@@ -272,7 +272,17 @@ export default function GameBoard() {
       {/* Scoreboard */}
       <div className="z-10 flex w-full max-w-6xl justify-between px-4 mb-8">
         {/* Team 1 */}
-        <div className="flex flex-col items-center bg-white/10 backdrop-blur-md border-2 border-pink-300/30 rounded-2xl p-4 min-w-[200px] shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+        <div className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === teams[0].id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 min-w-[200px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative`}>
+          {gameState.controllingTeamId === teams[0].id && (
+            <div className="absolute -top-4 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-bounce">
+              Đang kiểm soát
+            </div>
+          )}
+          {gameState.isStealing && gameState.stealingTeamId === teams[0].id && (
+            <div className="absolute -top-4 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-pulse">
+              Đang cướp điểm
+            </div>
+          )}
           <h3 className="text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide">{teams[0].name}</h3>
           <motion.div 
             key={teams[0].score}
@@ -286,7 +296,12 @@ export default function GameBoard() {
         </div>
 
         {/* Current Points */}
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center relative">
+          {gameState.isStealing && (
+            <div className="absolute -top-12 bg-orange-600/80 backdrop-blur text-white px-6 py-2 rounded-full font-bold uppercase tracking-widest border border-orange-400 shadow-[0_0_30px_rgba(234,88,12,0.6)] animate-pulse whitespace-nowrap">
+              CƠ HỘI CƯỚP ĐIỂM
+            </div>
+          )}
           <motion.div 
             key={tempScore}
             initial={{ scale: 1.3, borderColor: '#fcd34d', boxShadow: '0 0 60px rgba(250,204,21,0.8)' }}
@@ -308,7 +323,17 @@ export default function GameBoard() {
         </div>
 
         {/* Team 2 */}
-        <div className="flex flex-col items-center bg-white/10 backdrop-blur-md border-2 border-pink-300/30 rounded-2xl p-4 min-w-[200px] shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+        <div className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === teams[1].id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 min-w-[200px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative`}>
+          {gameState.controllingTeamId === teams[1].id && (
+            <div className="absolute -top-4 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-bounce">
+              Đang kiểm soát
+            </div>
+          )}
+          {gameState.isStealing && gameState.stealingTeamId === teams[1].id && (
+            <div className="absolute -top-4 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-pulse">
+              Đang cướp điểm
+            </div>
+          )}
           <h3 className="text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide">{teams[1].name}</h3>
           <motion.div 
             key={teams[1].score}

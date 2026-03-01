@@ -29,4 +29,7 @@ export interface GameState {
   strikes: number;
   tempScore: number;
   showStrike: boolean;
+  controllingTeamId?: string | null;
+  stealingTeamId?: string | null;
+  isStealing?: boolean;
 }

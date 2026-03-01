@@ -20,6 +20,7 @@ interface GameContextType {
   addQuestion: (question: Question) => void;
   deleteQuestion: (questionId: string) => void;
   resetGame: () => void;
+  updateGameState: (updates: Partial<GameState>) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -27,6 +28,10 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [gameState, setGameState] = useState<GameState>(defaultGameState);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const updateGameState = (updates: Partial<GameState>) => {
+    setGameState((prev) => ({ ...prev, ...updates }));
+  };
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -283,6 +288,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         addQuestion,
         deleteQuestion,
         resetGame,
+        updateGameState,
       }}
     >
       {children}

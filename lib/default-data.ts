@@ -39,4 +39,7 @@ export const defaultGameState: GameState = {
   strikes: 0,
   tempScore: 0,
   showStrike: false,
+  controllingTeamId: null,
+  stealingTeamId: null,
+  isStealing: false,
 };

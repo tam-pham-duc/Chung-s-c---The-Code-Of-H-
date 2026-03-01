@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useGame } from './GameProvider';
 import { Question, Answer, Team } from '@/lib/types';
-import { Settings, Users, HelpCircle, Play, X, Plus, Trash2, Save, RotateCcw, Eye, Palette } from 'lucide-react';
+import { Settings, Users, HelpCircle, Play, X, Plus, Trash2, Save, RotateCcw, Eye, Palette, ArrowLeft } from 'lucide-react';
 
 export default function AdminPanel() {
   const {
@@ -104,10 +104,25 @@ export default function AdminPanel() {
         
         {/* Header */}
         <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Settings className="w-6 h-6" />
-            Bảng Điều Khiển - Chung Sức
-          </h1>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => {
+                const currentTabIndex = tabOrder.indexOf(activeTab);
+                if (currentTabIndex > 0) {
+                  setActiveTab(tabOrder[currentTabIndex - 1] as any);
+                }
+              }}
+              disabled={tabOrder.indexOf(activeTab) === 0}
+              className="p-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center justify-center"
+              title="Quay lại tab trước"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Settings className="w-6 h-6" />
+              Bảng Điều Khiển - Chung Sức
+            </h1>
+          </div>
           <button
             onClick={() => setShowResetConfirm(true)}
             className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors"

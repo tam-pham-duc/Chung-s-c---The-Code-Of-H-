@@ -38,6 +38,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem('chungSucGameState');
     if (saved) {
       try {
+        // eslint-disable-next-line
         setGameState(JSON.parse(saved));
       } catch (e) {
         console.error('Failed to parse saved game state', e);

@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useGame } from './GameProvider';
 import { Question, Answer, Team } from '@/lib/types';
-import { Settings, Users, HelpCircle, Play, X, Plus, Trash2, Save, RotateCcw, Eye, Palette, ArrowLeft } from 'lucide-react';
+import { Settings, Users, HelpCircle, Play, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload } from 'lucide-react';
+import Papa from 'papaparse';
 
 export default function AdminPanel() {
   const {
@@ -21,13 +22,13 @@ export default function AdminPanel() {
     resetGame,
   } = useGame();
 
-  const [activeTab, setActiveTab] = useState<'control' | 'teams' | 'questions' | 'settings'>('control');
+  const [activeTab, setActiveTab] = useState<'control' | 'program' | 'teams' | 'questions' | 'settings'>('control');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Admin Settings State
   const [adminTheme, setAdminTheme] = useState('blue');
   const [adminFont, setAdminFont] = useState('font-sans');
-  const [tabOrder, setTabOrder] = useState(['control', 'teams', 'questions', 'settings']);
+  const [tabOrder, setTabOrder] = useState(['control', 'program', 'teams', 'questions', 'settings']);
 
   // Load settings
   React.useEffect(() => {
@@ -37,7 +38,14 @@ export default function AdminPanel() {
         const parsed = JSON.parse(saved);
         if (parsed.adminTheme) setAdminTheme(parsed.adminTheme);
         if (parsed.adminFont) setAdminFont(parsed.adminFont);
-        if (parsed.tabOrder) setTabOrder(parsed.tabOrder);
+        if (parsed.tabOrder) {
+          // Ensure 'program' is in the tabOrder if it was saved before this update
+          const loadedOrder = parsed.tabOrder;
+          if (!loadedOrder.includes('program')) {
+            loadedOrder.splice(1, 0, 'program');
+          }
+          setTabOrder(loadedOrder);
+        }
       } catch (e) {}
     }
   }, []);
@@ -67,6 +75,7 @@ export default function AdminPanel() {
 
   const tabConfig = {
     control: { id: 'control', label: 'Điều khiển Game', icon: <Play className="w-4 h-4" /> },
+    program: { id: 'program', label: 'Cài đặt Chương trình', icon: <Settings className="w-4 h-4" /> },
     teams: { id: 'teams', label: 'Quản lý Đội chơi', icon: <Users className="w-4 h-4" /> },
     questions: { id: 'questions', label: 'Quản lý Câu hỏi', icon: <HelpCircle className="w-4 h-4" /> },
     settings: { id: 'settings', label: 'Cài đặt Admin', icon: <Palette className="w-4 h-4" /> },
@@ -157,6 +166,7 @@ export default function AdminPanel() {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === 'control' && <ControlTab themeColor={getThemeClass('bg')} />}
+          {activeTab === 'program' && <ProgramTab themeColor={getThemeClass('bg')} />}
           {activeTab === 'teams' && <TeamsTab themeColor={getThemeClass('bg')} />}
           {activeTab === 'questions' && <QuestionsTab themeColor={getThemeClass('bg')} />}
           {activeTab === 'settings' && (
@@ -326,6 +336,46 @@ function ControlTab({ themeColor }: { themeColor: string }) {
 
       {/* Game Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Timer Control */}
+        <div className="bg-teal-50 p-6 rounded-lg border border-teal-100 flex flex-col items-center justify-center md:col-span-2">
+          <h3 className="text-lg font-bold text-teal-800 mb-4">Bộ đếm thời gian</h3>
+          <div className="flex items-center gap-4 mb-4">
+            <label className="font-medium text-teal-700">Thời gian (giây):</label>
+            <input 
+              type="number" 
+              value={gameState.timerDuration || 30}
+              onChange={(e) => updateGameState({ timerDuration: parseInt(e.target.value) || 30 })}
+              className="w-24 px-3 py-2 border border-teal-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+              disabled={!!gameState.timerStartedAt}
+            />
+          </div>
+          <div className="flex gap-4">
+            {!gameState.timerStartedAt ? (
+              <button 
+                onClick={() => updateGameState({ timerStartedAt: Date.now() })}
+                className="px-6 py-2 bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700 shadow-sm flex items-center gap-2"
+              >
+                <Play className="w-5 h-5" /> Bắt đầu đếm giờ
+              </button>
+            ) : (
+              <>
+                <button 
+                  onClick={() => updateGameState({ timerStartedAt: null })}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 shadow-sm flex items-center gap-2"
+                >
+                  <X className="w-5 h-5" /> Dừng
+                </button>
+                <button 
+                  onClick={() => updateGameState({ timerStartedAt: Date.now() })}
+                  className="px-6 py-2 bg-yellow-500 text-white rounded-lg font-bold hover:bg-yellow-600 shadow-sm flex items-center gap-2"
+                >
+                  <RotateCcw className="w-5 h-5" /> Làm mới
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* Strikes */}
         <div className="bg-red-50 p-6 rounded-lg border border-red-100 flex flex-col items-center justify-center">
           <h3 className="text-lg font-bold text-red-800 mb-4">Đánh dấu Sai (Strike)</h3>
@@ -365,6 +415,64 @@ function ControlTab({ themeColor }: { themeColor: string }) {
             >
               Cộng cho {teams[1].name}
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProgramTab({ themeColor }: { themeColor: string }) {
+  const { gameState, updateGameState } = useGame();
+
+  return (
+    <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg border border-gray-200 shadow-sm">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Cài đặt Tên Chương Trình</h2>
+      
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tên chương trình (Tiếng Việt)</label>
+            <input
+              type="text"
+              value={gameState.programName || ''}
+              onChange={(e) => updateGameState({ programName: e.target.value })}
+              placeholder="VD: CHUNG SỨC"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tên chương trình (Tiếng Anh)</label>
+            <input
+              type="text"
+              value={gameState.programNameEn || ''}
+              onChange={(e) => updateGameState({ programNameEn: e.target.value })}
+              placeholder="VD: FAMILY FEUD"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Chủ đề (Tiếng Việt)</label>
+            <input
+              type="text"
+              value={gameState.programTheme || ''}
+              onChange={(e) => updateGameState({ programTheme: e.target.value })}
+              placeholder="VD: Giải Mã Phái Đẹp"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Chủ đề (Tiếng Anh)</label>
+            <input
+              type="text"
+              value={gameState.programThemeEn || ''}
+              onChange={(e) => updateGameState({ programThemeEn: e.target.value })}
+              placeholder="VD: The Code Of Her"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
       </div>
@@ -431,9 +539,10 @@ function TeamsTab({ themeColor }: { themeColor: string }) {
 }
 
 function QuestionsTab({ themeColor }: { themeColor: string }) {
-  const { gameState, updateQuestion, addQuestion, deleteQuestion } = useGame();
+  const { gameState, updateQuestion, addQuestion, deleteQuestion, updateGameState } = useGame();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddQuestion = () => {
     const newQ: Question = {
@@ -448,6 +557,107 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
     };
     addQuestion(newQ);
     setEditingId(newQ.id);
+  };
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(gameState.questions, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileDefaultName = 'questions.json';
+
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        
+        if (file.name.endsWith('.csv')) {
+          Papa.parse(content, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+              const parsedQuestions: Question[] = [];
+              
+              results.data.forEach((row: any, index: number) => {
+                const q: any = {
+                  id: row.id || `q${Date.now()}-${index}`,
+                  text: row.text || '',
+                  round: parseInt(row.round) || 1,
+                  multiplier: parseInt(row.multiplier) || 1,
+                  timeLimit: parseInt(row.timeLimit) || 30,
+                  isSuddenDeath: row.isSuddenDeath?.toLowerCase() === 'true',
+                  answers: []
+                };
+
+                // Extract answers (assuming up to 8 answers)
+                for (let i = 1; i <= 8; i++) {
+                  const ansText = row[`answer${i}_text`];
+                  const ansPoints = row[`answer${i}_points`];
+                  
+                  if (ansText) {
+                    q.answers.push({
+                      id: `a${Date.now()}-${index}-${i}`,
+                      text: ansText,
+                      points: parseInt(ansPoints) || 0,
+                      revealed: false
+                    });
+                  }
+                }
+                
+                if (q.text && q.answers.length > 0) {
+                  parsedQuestions.push(q as Question);
+                }
+              });
+
+              if (parsedQuestions.length > 0) {
+                if (confirm('Bạn có muốn thay thế toàn bộ câu hỏi hiện tại bằng dữ liệu từ file CSV không? (Chọn Cancel để thêm vào danh sách hiện tại)')) {
+                  updateGameState({ questions: parsedQuestions });
+                } else {
+                  updateGameState({ questions: [...gameState.questions, ...parsedQuestions] });
+                }
+              } else {
+                alert('Không tìm thấy câu hỏi hợp lệ trong file CSV.');
+              }
+            },
+            error: (error: any) => {
+              alert('Lỗi khi đọc file CSV: ' + error.message);
+            }
+          });
+        } else {
+          // Assume JSON
+          const parsed = JSON.parse(content);
+          if (Array.isArray(parsed)) {
+            const isValid = parsed.every(q => q.id && q.text && Array.isArray(q.answers));
+            if (isValid) {
+              if (confirm('Bạn có muốn thay thế toàn bộ câu hỏi hiện tại bằng dữ liệu từ file JSON không? (Chọn Cancel để thêm vào danh sách hiện tại)')) {
+                updateGameState({ questions: parsed });
+              } else {
+                updateGameState({ questions: [...gameState.questions, ...parsed] });
+              }
+            } else {
+              alert('File JSON không đúng định dạng câu hỏi.');
+            }
+          } else {
+            alert('File JSON phải chứa một mảng các câu hỏi.');
+          }
+        }
+      } catch (error) {
+        alert('Lỗi khi đọc file.');
+      }
+    };
+    reader.readAsText(file);
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -503,12 +713,35 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
 
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-800">Danh sách câu hỏi</h2>
-        <button
-          onClick={handleAddQuestion}
-          className={`px-4 py-2 ${themeColor} text-white rounded-lg font-medium flex items-center gap-2`}
-        >
-          <Plus className="w-4 h-4" /> Thêm câu hỏi
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="file"
+            accept=".json,.csv"
+            ref={fileInputRef}
+            onChange={handleImport}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium flex items-center gap-2 transition-colors"
+            title="Nhập từ file JSON hoặc CSV"
+          >
+            <Upload className="w-4 h-4" /> Nhập
+          </button>
+          <button
+            onClick={handleExport}
+            className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium flex items-center gap-2 transition-colors"
+            title="Xuất ra file JSON"
+          >
+            <Download className="w-4 h-4" /> Xuất
+          </button>
+          <button
+            onClick={handleAddQuestion}
+            className={`px-4 py-2 ${themeColor} text-white rounded-lg font-medium flex items-center gap-2`}
+          >
+            <Plus className="w-4 h-4" /> Thêm câu hỏi
+          </button>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -687,6 +920,17 @@ function QuestionEditor({ question, onSave, onCancel, themeColor }: { question: 
                 placeholder="Điểm"
                 className="w-20 px-3 py-1.5 border border-gray-300 rounded-md text-sm"
               />
+              <button
+                onClick={() => handleAnswerChange(idx, 'revealed', !ans.revealed)}
+                className={`p-1.5 rounded flex items-center justify-center transition-colors ${
+                  ans.revealed 
+                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                }`}
+                title={ans.revealed ? "Đã lật (Nhấn để ẩn)" : "Đang ẩn (Nhấn để lật)"}
+              >
+                {ans.revealed ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              </button>
               <button onClick={() => removeAnswer(idx)} className="p-1.5 text-red-500 hover:bg-red-50 rounded">
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -729,6 +973,7 @@ function SettingsTab({
 
   const tabLabels: Record<string, string> = {
     control: 'Điều khiển Game',
+    program: 'Cài đặt Chương trình',
     teams: 'Quản lý Đội chơi',
     questions: 'Quản lý Câu hỏi',
     settings: 'Cài đặt Admin'

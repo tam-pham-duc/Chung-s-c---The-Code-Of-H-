@@ -1,6 +1,10 @@
 import { GameState } from './types';
 
 export const defaultGameState: GameState = {
+  programName: 'CHUNG SỨC',
+  programTheme: 'Giải Mã Phái Đẹp',
+  programNameEn: 'FAMILY FEUD',
+  programThemeEn: 'The Code Of Her',
   teams: [
     { id: 'team1', name: 'Đội 1', members: ['Đội trưởng 1', 'Thành viên 2', 'Thành viên 3', 'Thành viên 4'], score: 0 },
     { id: 'team2', name: 'Đội 2', members: ['Đội trưởng 2', 'Thành viên 2', 'Thành viên 3', 'Thành viên 4'], score: 0 },
@@ -42,4 +46,6 @@ export const defaultGameState: GameState = {
   controllingTeamId: null,
   stealingTeamId: null,
   isStealing: false,
+  timerDuration: 30,
+  timerStartedAt: null,
 };

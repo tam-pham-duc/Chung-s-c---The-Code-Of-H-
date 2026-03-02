@@ -30,10 +30,12 @@ export default function Leaderboard() {
           <Trophy className="w-24 h-24 mx-auto text-yellow-400 mb-4 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
         </motion.div>
         <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-600 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-wider uppercase">
-          BẢNG XẾP HẠNG
+          {gameState.programName || 'BẢNG XẾP HẠNG'}
+          {gameState.programNameEn && <span className="text-2xl md:text-4xl ml-4 opacity-80">- {gameState.programNameEn}</span>}
         </h1>
         <h2 className="text-2xl md:text-3xl font-bold text-white drop-shadow-md mt-4">
-          Giải Mã Phái Đẹp - The Code Of Her
+          {gameState.programTheme || 'Giải Mã Phái Đẹp'}
+          {gameState.programThemeEn && <span className="opacity-80 ml-2">- {gameState.programThemeEn}</span>}
         </h2>
       </motion.div>
 

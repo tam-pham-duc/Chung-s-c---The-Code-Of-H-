@@ -23,6 +23,10 @@ export interface Team {
 }
 
 export interface GameState {
+  programName: string;
+  programTheme: string;
+  programNameEn: string;
+  programThemeEn: string;
   teams: Team[];
   questions: Question[];
   currentQuestionIndex: number;
@@ -32,4 +36,6 @@ export interface GameState {
   controllingTeamId?: string | null;
   stealingTeamId?: string | null;
   isStealing?: boolean;
+  timerDuration: number;
+  timerStartedAt: number | null;
 }

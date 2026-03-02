@@ -72,6 +72,47 @@ const playWrongSound = () => {
   }
 };
 
+const playWinSound = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    // Play a triumphant fanfare
+    const playNote = (freq: number, startTime: number, duration: number, type: OscillatorType = 'square') => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, startTime);
+      
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = ctx.currentTime;
+    // C major arpeggio fanfare
+    playNote(523.25, now, 0.2);       // C5
+    playNote(659.25, now + 0.2, 0.2); // E5
+    playNote(783.99, now + 0.4, 0.2); // G5
+    playNote(1046.50, now + 0.6, 0.8); // C6
+    
+    // Harmony
+    playNote(392.00, now, 0.2, 'triangle');       // G4
+    playNote(523.25, now + 0.2, 0.2, 'triangle'); // C5
+    playNote(659.25, now + 0.4, 0.2, 'triangle'); // E5
+    playNote(783.99, now + 0.6, 0.8, 'triangle'); // G5
+  } catch (e) {
+    console.error('Audio playback failed', e);
+  }
+};
+
 // Helper function to get theme colors and icons based on answer rank
 const getAnswerTheme = (index: number) => {
   switch (index) {
@@ -138,12 +179,62 @@ export default function GameBoard() {
   const currentQuestion = questions[currentQuestionIndex];
 
   const [introPlayedFor, setIntroPlayedFor] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const [showCelebration, setShowCelebration] = useState<string | null>(null);
+  
+  const displayTime = gameState.timerStartedAt 
+    ? Math.max(0, (gameState.timerDuration || 30) - Math.floor((currentTime - gameState.timerStartedAt) / 1000))
+    : (gameState.timerDuration || 30);
+  
+  // Generate confetti properties once using a deterministic pseudo-random generator
+  const confettiProps = React.useMemo(() => {
+    // Simple seeded PRNG
+    let seed = 12345;
+    const random = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+
+    return Array.from({ length: 50 }).map((_, i) => {
+      const colors = ['#facc15', '#f472b6', '#c084fc', '#38bdf8', '#34d399'];
+      return {
+        id: i,
+        color: colors[i % colors.length],
+        size: random() * 10 + 10,
+        left: `${random() * 100}%`,
+        duration: random() * 3 + 2,
+        delay: random() * 2,
+        xOffset: (random() - 0.5) * 200,
+        isTriangle: i % 2 === 0,
+        isCircle: i % 2 !== 0
+      };
+    });
+  }, []);
 
   // Refs for tracking changes to play sounds
   const prevStrikesRef = useRef(strikes);
   const prevRevealedCountRef = useRef(0);
   const prevQuestionIdRef = useRef<string | null>(null);
+  const prevScoresRef = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    // Check for winning threshold (e.g., 300 points)
+    const WIN_THRESHOLD = 300;
+    
+    teams.forEach(team => {
+      const prevScore = prevScoresRef.current[team.id] || 0;
+      if (team.score >= WIN_THRESHOLD && prevScore < WIN_THRESHOLD) {
+        setShowCelebration(team.id);
+        playWinSound();
+        
+        // Hide celebration after 8 seconds
+        setTimeout(() => {
+          setShowCelebration(null);
+        }, 8000);
+      }
+      prevScoresRef.current[team.id] = team.score;
+    });
+  }, [teams]);
 
   useEffect(() => {
     if (strikes > prevStrikesRef.current) {
@@ -167,21 +258,20 @@ export default function GameBoard() {
   }, [currentQuestion]);
 
   useEffect(() => {
+    if (gameState.timerStartedAt) {
+      const interval = setInterval(() => setCurrentTime(Date.now()), 100);
+      return () => clearInterval(interval);
+    }
+  }, [gameState.timerStartedAt]);
+
+  useEffect(() => {
     if (currentQuestion?.isSuddenDeath && introPlayedFor !== currentQuestion.id) {
       const timer = setTimeout(() => {
         setIntroPlayedFor(currentQuestion.id);
-        setTimeLeft(currentQuestion.timeLimit || 30);
       }, 4000);
       return () => clearTimeout(timer);
     }
   }, [currentQuestion, introPlayedFor]);
-
-  useEffect(() => {
-    if (currentQuestion?.isSuddenDeath && introPlayedFor === currentQuestion.id && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(t => t - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [currentQuestion, introPlayedFor, timeLeft]);
 
   if (!currentQuestion) {
     return <div className="flex items-center justify-center h-screen text-white text-2xl">Chưa có câu hỏi nào</div>;
@@ -237,26 +327,27 @@ export default function GameBoard() {
 
       {/* Header & Timer */}
       <div className="z-10 flex flex-col items-center mb-8 mt-4 w-full px-8">
-        {isSuddenDeathActive && (
+        {(gameState.timerStartedAt || isSuddenDeathActive) && (
           <motion.div 
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="absolute top-8 flex items-center gap-4 bg-black/40 backdrop-blur-md border border-rose-500/50 px-8 py-3 rounded-full shadow-[0_0_30px_rgba(244,63,94,0.3)]"
           >
-            <Clock className={`w-8 h-8 ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-300'}`} />
-            <span className={`text-5xl font-black tracking-widest ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-100'}`}>
-              {timeLeft}
+            <Clock className={`w-8 h-8 ${displayTime <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-300'}`} />
+            <span className={`text-5xl font-black tracking-widest ${displayTime <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-100'}`}>
+              {displayTime}
             </span>
           </motion.div>
         )}
 
-        <div className={`text-center ${isSuddenDeathActive ? 'mt-20' : ''}`}>
+        <div className={`text-center ${(gameState.timerStartedAt || isSuddenDeathActive) ? 'mt-20' : ''}`}>
           <motion.h1 
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-500 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-wider uppercase"
           >
-            CHUNG SỨC
+            {gameState.programName || 'CHUNG SỨC'}
+            {gameState.programNameEn && <span className="text-2xl md:text-4xl ml-4 opacity-80">- {gameState.programNameEn}</span>}
           </motion.h1>
           <motion.h2 
             initial={{ y: -20, opacity: 0 }}
@@ -264,7 +355,8 @@ export default function GameBoard() {
             transition={{ delay: 0.1 }}
             className="text-xl md:text-2xl font-bold text-pink-100 drop-shadow-md mt-2 tracking-widest uppercase"
           >
-            Giải Mã Phái Đẹp
+            {gameState.programTheme || 'Giải Mã Phái Đẹp'}
+            {gameState.programThemeEn && <span className="opacity-80 ml-2">- {gameState.programThemeEn}</span>}
           </motion.h2>
         </div>
       </div>
@@ -428,21 +520,31 @@ export default function GameBoard() {
       <AnimatePresence>
         {showStrike && (
           <motion.div
-            initial={{ scale: 0, opacity: 0, rotate: -45 }}
-            animate={{ scale: 1, opacity: 1, rotate: 0 }}
-            exit={{ scale: 1.5, opacity: 0 }}
-            transition={{ type: 'spring', bounce: 0.6, duration: 0.6 }}
-            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-rose-950/60 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-black/60 backdrop-blur-sm"
           >
-            <div className="flex gap-8">
+            <div className="flex gap-8 md:gap-12">
               {Array.from({ length: strikes }).map((_, i) => (
                 <motion.div
                   key={i}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: i * 0.1, type: 'spring', bounce: 0.5 }}
+                  initial={{ scale: 0, rotate: -90, opacity: 0 }}
+                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                  exit={{ scale: 1.5, opacity: 0 }}
+                  transition={{ 
+                    type: 'spring', 
+                    bounce: 0.6, 
+                    duration: 0.8,
+                    delay: i * 0.15 
+                  }}
+                  className="relative flex items-center justify-center"
                 >
-                  <X className="w-64 h-64 text-rose-500 drop-shadow-[0_0_40px_rgba(244,63,94,0.8)]" strokeWidth={4} />
+                  <div className="absolute w-full h-full bg-red-600 rounded-full blur-3xl opacity-60 animate-pulse"></div>
+                  <div className="relative bg-gradient-to-br from-red-500 to-red-800 border-[12px] border-white rounded-full p-6 md:p-10 shadow-[0_0_60px_rgba(220,38,38,0.8)]">
+                    <X className="w-32 h-32 md:w-48 md:h-48 text-white drop-shadow-[0_8px_8px_rgba(0,0,0,0.6)]" strokeWidth={4} />
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -465,6 +567,82 @@ export default function GameBoard() {
           </div>
         ))}
       </div>
+
+      {/* Celebration Overlay */}
+      <AnimatePresence>
+        {showCelebration && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-black/40 backdrop-blur-sm overflow-hidden"
+          >
+            {/* Confetti particles */}
+            {confettiProps.map((props) => (
+              <motion.div
+                key={`confetti-${props.id}`}
+                initial={{ y: -100, x: 0, opacity: 1, rotate: 0 }}
+                animate={{ 
+                  y: '100vh', 
+                  x: props.xOffset,
+                  rotate: 360 * 5,
+                  opacity: [1, 1, 0]
+                }}
+                transition={{ 
+                  duration: props.duration, 
+                  delay: props.delay, 
+                  ease: "linear",
+                  repeat: Infinity
+                }}
+                className="absolute top-0"
+                style={{ 
+                  left: props.left, 
+                  width: props.size, 
+                  height: props.size, 
+                  backgroundColor: props.color,
+                  clipPath: props.isTriangle ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none',
+                  borderRadius: props.isCircle ? '50%' : '0%'
+                }}
+              />
+            ))}
+
+            <motion.div
+              initial={{ scale: 0.5, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 1.2, opacity: 0 }}
+              transition={{ type: 'spring', bounce: 0.5, duration: 0.8 }}
+              className="relative bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 p-1 rounded-3xl shadow-[0_0_100px_rgba(250,204,21,0.8)]"
+            >
+              <div className="bg-gradient-to-br from-indigo-950 to-purple-950 rounded-[22px] p-12 flex flex-col items-center text-center border-4 border-yellow-400/50">
+                <motion.div
+                  animate={{ 
+                    rotateY: [0, 360],
+                    y: [-10, 10, -10]
+                  }}
+                  transition={{ 
+                    rotateY: { duration: 3, repeat: Infinity, ease: "linear" },
+                    y: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                  }}
+                  className="mb-6"
+                >
+                  <Crown className="w-32 h-32 text-yellow-400 drop-shadow-[0_0_30px_rgba(250,204,21,0.8)]" />
+                </motion.div>
+                
+                <h2 className="text-3xl font-bold text-yellow-200 tracking-widest uppercase mb-2">
+                  CHÚC MỪNG
+                </h2>
+                <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-500 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] uppercase mb-6">
+                  {teams.find(t => t.id === showCelebration)?.name}
+                </h1>
+                <div className="text-2xl font-bold text-white bg-white/10 px-8 py-3 rounded-full border border-white/20 backdrop-blur-md">
+                  ĐÃ ĐẠT {teams.find(t => t.id === showCelebration)?.score} ĐIỂM!
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

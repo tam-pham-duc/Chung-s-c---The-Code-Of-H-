@@ -651,20 +651,30 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
               const parsedQuestions: Question[] = [];
               
               results.data.forEach((row: any, index: number) => {
+                // Normalize keys to lowercase for easier matching
+                const normalizedRow: any = {};
+                if (row && typeof row === 'object') {
+                  Object.keys(row).forEach(key => {
+                    if (key) {
+                      normalizedRow[key.trim().toLowerCase()] = row[key];
+                    }
+                  });
+                }
+
                 const q: any = {
-                  id: row.id || `q${Date.now()}-${index}`,
-                  text: row.text || '',
-                  round: parseInt(row.round) || 1,
-                  multiplier: parseInt(row.multiplier) || 1,
-                  timeLimit: parseInt(row.timeLimit) || 30,
-                  isSuddenDeath: row.isSuddenDeath?.toLowerCase() === 'true',
+                  id: normalizedRow.id || `q${Date.now()}-${index}`,
+                  text: normalizedRow.text || normalizedRow.question || '',
+                  round: parseInt(normalizedRow.round) || 1,
+                  multiplier: parseInt(normalizedRow.multiplier) || 1,
+                  timeLimit: parseInt(normalizedRow.timelimit || normalizedRow['time limit']) || 30,
+                  isSuddenDeath: String(normalizedRow.issuddendeath || normalizedRow['sudden death'] || false).toLowerCase() === 'true',
                   answers: []
                 };
 
                 // Extract answers (assuming up to 8 answers)
                 for (let i = 1; i <= 8; i++) {
-                  const ansText = row[`answer${i}_text`];
-                  const ansPoints = row[`answer${i}_points`];
+                  const ansText = normalizedRow[`answer${i}_text`] || normalizedRow[`answer${i}`] || normalizedRow[`answer ${i}`];
+                  const ansPoints = normalizedRow[`answer${i}_points`] || normalizedRow[`points${i}`] || normalizedRow[`points ${i}`];
                   
                   if (ansText) {
                     q.answers.push({

@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useGame } from './GameProvider';
 import { Question, Answer, Team } from '@/lib/types';
-import { Settings, Users, HelpCircle, Play, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload } from 'lucide-react';
+import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload } from 'lucide-react';
 import Papa from 'papaparse';
 
 export default function AdminPanel() {
@@ -233,6 +233,70 @@ function ControlTab({ themeColor }: { themeColor: string }) {
         >
           Câu tiếp
         </button>
+      </div>
+
+      {/* Timer Controls */}
+      <div className="bg-rose-50 p-6 rounded-lg border border-rose-100">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-rose-800 flex items-center gap-2">
+            <Clock className="w-5 h-5" /> Đồng hồ đếm ngược
+          </h3>
+          <label className="flex items-center gap-2 text-sm font-medium text-rose-700 cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={gameState.showTimer} 
+              onChange={(e) => updateGameState({ showTimer: e.target.checked })}
+              className="rounded text-rose-600 focus:ring-rose-500"
+            />
+            Hiển thị đồng hồ trên màn hình
+          </label>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Thời gian (giây):</label>
+            <input
+              type="number"
+              min="1"
+              value={gameState.timerDuration}
+              onChange={(e) => updateGameState({ timerDuration: parseInt(e.target.value) || 30 })}
+              className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:ring-rose-500 focus:border-rose-500"
+              disabled={gameState.timerStartedAt !== null}
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            {!gameState.timerStartedAt ? (
+              <button
+                onClick={() => updateGameState({ timerStartedAt: Date.now() })}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm flex items-center gap-2"
+              >
+                <Play className="w-4 h-4" /> Bắt đầu
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  const elapsed = Math.floor((Date.now() - gameState.timerStartedAt!) / 1000);
+                  const remaining = Math.max(0, gameState.timerDuration - elapsed);
+                  updateGameState({ timerDuration: remaining, timerStartedAt: null });
+                }}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-md shadow-sm flex items-center gap-2"
+              >
+                <Pause className="w-4 h-4" /> Tạm dừng
+              </button>
+            )}
+            
+            <button
+              onClick={() => updateGameState({ 
+                timerDuration: currentQuestion.timeLimit || 30, 
+                timerStartedAt: null 
+              })}
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-md shadow-sm flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" /> Làm mới
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Control & Steal Phase */}

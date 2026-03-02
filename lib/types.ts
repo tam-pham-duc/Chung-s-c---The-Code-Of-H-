@@ -38,4 +38,5 @@ export interface GameState {
   isStealing?: boolean;
   timerDuration: number;
   timerStartedAt: number | null;
+  showTimer: boolean;
 }

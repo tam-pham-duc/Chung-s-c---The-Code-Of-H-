@@ -48,4 +48,5 @@ export const defaultGameState: GameState = {
   isStealing: false,
   timerDuration: 30,
   timerStartedAt: null,
+  showTimer: false,
 };

@@ -623,10 +623,39 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
     setEditingId(newQ.id);
   };
 
-  const handleExport = () => {
+  const handleExportJSON = () => {
     const dataStr = JSON.stringify(gameState.questions, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
     const exportFileDefaultName = 'questions.json';
+
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const handleExportCSV = () => {
+    const csvData = gameState.questions.map(q => {
+      const row: any = {
+        id: q.id,
+        text: q.text,
+        round: q.round,
+        multiplier: q.multiplier,
+        timeLimit: q.timeLimit,
+        isSuddenDeath: q.isSuddenDeath
+      };
+      
+      q.answers.forEach((ans, i) => {
+        row[`answer${i+1}_text`] = ans.text;
+        row[`answer${i+1}_points`] = ans.points;
+      });
+      
+      return row;
+    });
+
+    const csvStr = Papa.unparse(csvData);
+    const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvStr);
+    const exportFileDefaultName = 'questions.csv';
 
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -803,11 +832,18 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
             <Upload className="w-4 h-4" /> Nhập
           </button>
           <button
-            onClick={handleExport}
+            onClick={handleExportJSON}
             className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium flex items-center gap-2 transition-colors"
             title="Xuất ra file JSON"
           >
-            <Download className="w-4 h-4" /> Xuất
+            <Download className="w-4 h-4" /> JSON
+          </button>
+          <button
+            onClick={handleExportCSV}
+            className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium flex items-center gap-2 transition-colors"
+            title="Xuất ra file CSV"
+          >
+            <Download className="w-4 h-4" /> CSV
           </button>
           <button
             onClick={handleAddQuestion}

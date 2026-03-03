@@ -675,7 +675,8 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
         const content = e.target?.result as string;
         
         if (file.name.endsWith('.csv')) {
-          Papa.parse(content, {
+          const cleanContent = content.replace(/^\uFEFF/, '');
+          Papa.parse(cleanContent, {
             header: true,
             skipEmptyLines: true,
             complete: (results) => {

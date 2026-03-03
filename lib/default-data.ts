@@ -49,4 +49,18 @@ export const defaultGameState: GameState = {
   timerDuration: 30,
   timerStartedAt: null,
   showTimer: false,
+  soundSettings: {
+    bgmUrl: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
+    bgmVolume: 0.5,
+    correctSoundType: 'magic',
+    wrongSoundType: 'buzzer',
+    completeSoundType: 'triumphant',
+    winSoundType: 'fanfare',
+    customUrls: {
+      correct: '',
+      wrong: '',
+      complete: '',
+      win: ''
+    }
+  }
 };

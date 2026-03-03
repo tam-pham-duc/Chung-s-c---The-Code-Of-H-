@@ -6,13 +6,18 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Crown, Gem, Heart, Star, Sparkles, Flower2, Flame, Clock, Music, Music2 } from 'lucide-react';
 
 // Sound effect generators using Web Audio API
-const playCorrectSound = (rank: number = 0) => {
+const playCorrectSound = (rank: number = 0, settings?: any) => {
   try {
+    if (settings?.correctSoundType === 'custom' && settings.customUrls?.correct) {
+      const audio = new Audio(settings.customUrls.correct);
+      audio.play().catch(e => console.error("Custom audio play failed:", e));
+      return;
+    }
+
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
     
-    // Play a magical chime sound (Giải Mã Phái Đẹp theme)
     const playNote = (freq: number, startTime: number, duration: number, type: OscillatorType = 'sine') => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -32,30 +37,46 @@ const playCorrectSound = (rank: number = 0) => {
 
     const now = ctx.currentTime;
     
-    if (rank === 0) {
-      // Top answer: Epic magical chime
-      playNote(523.25, now, 0.4); // C5
-      playNote(659.25, now + 0.1, 0.4); // E5
+    if (settings?.correctSoundType === 'bell') {
+      playNote(880.00, now, 0.5, 'triangle'); // A5
+      if (rank === 0) playNote(1046.50, now + 0.2, 0.8, 'triangle'); // C6
+    } else if (settings?.correctSoundType === 'chime') {
+      playNote(523.25, now, 0.3); // C5
+      playNote(659.25, now + 0.1, 0.3); // E5
       playNote(783.99, now + 0.2, 0.6); // G5
-      playNote(1046.50, now + 0.3, 1.0); // C6
-      playNote(1318.51, now + 0.4, 1.5, 'triangle'); // E6
-    } else if (rank === 1 || rank === 2) {
-      // High answers: Good chime
-      playNote(523.25, now, 0.4); // C5
-      playNote(659.25, now + 0.1, 0.4); // E5
-      playNote(783.99, now + 0.2, 0.8); // G5
     } else {
-      // Lower answers: Simple chime
-      playNote(523.25, now, 0.4); // C5
-      playNote(659.25, now + 0.1, 0.6); // E5
+      // Default 'magic'
+      if (rank === 0) {
+        // Top answer: Epic magical chime
+        playNote(523.25, now, 0.4); // C5
+        playNote(659.25, now + 0.1, 0.4); // E5
+        playNote(783.99, now + 0.2, 0.6); // G5
+        playNote(1046.50, now + 0.3, 1.0); // C6
+        playNote(1318.51, now + 0.4, 1.5, 'triangle'); // E6
+      } else if (rank === 1 || rank === 2) {
+        // High answers: Good chime
+        playNote(523.25, now, 0.4); // C5
+        playNote(659.25, now + 0.1, 0.4); // E5
+        playNote(783.99, now + 0.2, 0.8); // G5
+      } else {
+        // Lower answers: Simple chime
+        playNote(523.25, now, 0.4); // C5
+        playNote(659.25, now + 0.1, 0.6); // E5
+      }
     }
   } catch (e) {
     console.error('Audio playback failed', e);
   }
 };
 
-const playCompleteSound = () => {
+const playCompleteSound = (settings?: any) => {
   try {
+    if (settings?.completeSoundType === 'custom' && settings.customUrls?.complete) {
+      const audio = new Audio(settings.customUrls.complete);
+      audio.play().catch(e => console.error("Custom audio play failed:", e));
+      return;
+    }
+
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
@@ -78,64 +99,45 @@ const playCompleteSound = () => {
     };
 
     const now = ctx.currentTime;
-    // Triumphant chord progression
-    playNote(523.25, now, 0.5); // C5
-    playNote(659.25, now, 0.5); // E5
-    playNote(783.99, now, 0.5); // G5
     
-    playNote(698.46, now + 0.3, 0.5); // F5
-    playNote(880.00, now + 0.3, 0.5); // A5
-    playNote(1046.50, now + 0.3, 0.5); // C6
-    
-    playNote(783.99, now + 0.6, 1.5, 'triangle'); // G5
-    playNote(987.77, now + 0.6, 1.5, 'triangle'); // B5
-    playNote(1174.66, now + 0.6, 1.5, 'triangle'); // D6
-    playNote(1567.98, now + 0.6, 2.0, 'sine'); // G6
+    if (settings?.completeSoundType === 'fanfare') {
+      playNote(523.25, now, 0.2, 'square'); // C5
+      playNote(523.25, now + 0.2, 0.2, 'square'); // C5
+      playNote(523.25, now + 0.4, 0.2, 'square'); // C5
+      playNote(659.25, now + 0.6, 0.8, 'square'); // E5
+    } else {
+      // Default 'triumphant'
+      playNote(523.25, now, 0.5); // C5
+      playNote(659.25, now, 0.5); // E5
+      playNote(783.99, now, 0.5); // G5
+      
+      playNote(698.46, now + 0.3, 0.5); // F5
+      playNote(880.00, now + 0.3, 0.5); // A5
+      playNote(1046.50, now + 0.3, 0.5); // C6
+      
+      playNote(783.99, now + 0.6, 1.5, 'triangle'); // G5
+      playNote(987.77, now + 0.6, 1.5, 'triangle'); // B5
+      playNote(1174.66, now + 0.6, 1.5, 'triangle'); // D6
+      playNote(1567.98, now + 0.6, 2.0, 'sine'); // G6
+    }
   } catch (e) {
     console.error('Audio playback failed', e);
   }
 };
 
-const playWrongSound = () => {
+const playWrongSound = (settings?: any) => {
   try {
+    if (settings?.wrongSoundType === 'custom' && settings.customUrls?.wrong) {
+      const audio = new Audio(settings.customUrls.wrong);
+      audio.play().catch(e => console.error("Custom audio play failed:", e));
+      return;
+    }
+
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
     
-    // Play a dramatic buzzer sound
-    const playBuzzer = (freq: number, startTime: number, duration: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(freq, startTime);
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.8, startTime + duration);
-      
-      gain.gain.setValueAtTime(0.3, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-      
-      osc.start(startTime);
-      osc.stop(startTime + duration);
-    };
-
-    const now = ctx.currentTime;
-    playBuzzer(150, now, 0.4);
-    playBuzzer(140, now + 0.1, 0.5);
-  } catch (e) {
-    console.error('Audio playback failed', e);
-  }
-};
-
-const playWinSound = () => {
-  try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
-    
-    // Play a triumphant fanfare
-    const playNote = (freq: number, startTime: number, duration: number, type: OscillatorType = 'square') => {
+    const playNote = (freq: number, startTime: number, duration: number, type: OscillatorType = 'sawtooth') => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -145,7 +147,7 @@ const playWinSound = () => {
       osc.frequency.setValueAtTime(freq, startTime);
       
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+      gain.gain.linearRampToValueAtTime(0.5, startTime + 0.1);
       gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
       
       osc.start(startTime);
@@ -153,17 +155,84 @@ const playWinSound = () => {
     };
 
     const now = ctx.currentTime;
-    // C major arpeggio fanfare
-    playNote(523.25, now, 0.2);       // C5
-    playNote(659.25, now + 0.2, 0.2); // E5
-    playNote(783.99, now + 0.4, 0.2); // G5
-    playNote(1046.50, now + 0.6, 0.8); // C6
     
-    // Harmony
-    playNote(392.00, now, 0.2, 'triangle');       // G4
-    playNote(523.25, now + 0.2, 0.2, 'triangle'); // C5
-    playNote(659.25, now + 0.4, 0.2, 'triangle'); // E5
-    playNote(783.99, now + 0.6, 0.8, 'triangle'); // G5
+    if (settings?.wrongSoundType === 'horn') {
+      playNote(150, now, 0.8, 'square');
+      playNote(145, now, 0.8, 'sawtooth');
+    } else {
+      // Default 'buzzer'
+      playNote(150, now, 0.5);
+      playNote(140, now + 0.1, 0.6);
+      playNote(130, now + 0.2, 0.8);
+    }
+  } catch (e) {
+    console.error('Audio playback failed', e);
+  }
+};
+
+const playWinSound = (settings?: any) => {
+  try {
+    if (settings?.winSoundType === 'custom' && settings.customUrls?.win) {
+      const audio = new Audio(settings.customUrls.win);
+      audio.play().catch(e => console.error("Custom audio play failed:", e));
+      return;
+    }
+
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    const playNote = (freq: number, startTime: number, duration: number, type: OscillatorType = 'sine') => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, startTime);
+      
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.4, startTime + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = ctx.currentTime;
+    
+    if (settings?.winSoundType === 'applause') {
+      // Simulate applause with noise
+      const bufferSize = ctx.sampleRate * 2; // 2 seconds
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'lowpass';
+      noiseFilter.frequency.value = 1000;
+      noise.connect(noiseFilter);
+      const noiseGain = ctx.createGain();
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+      noiseGain.gain.setValueAtTime(0, now);
+      noiseGain.gain.linearRampToValueAtTime(0.5, now + 0.5);
+      noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 2);
+      noise.start(now);
+    } else {
+      // Default 'fanfare'
+      playNote(523.25, now, 0.4, 'triangle'); // C5
+      playNote(659.25, now + 0.2, 0.4, 'triangle'); // E5
+      playNote(783.99, now + 0.4, 0.4, 'triangle'); // G5
+      playNote(1046.50, now + 0.6, 1.5, 'triangle'); // C6
+      
+      playNote(523.25, now + 0.6, 1.5, 'sine'); // C5
+      playNote(659.25, now + 0.6, 1.5, 'sine'); // E5
+      playNote(783.99, now + 0.6, 1.5, 'sine'); // G5
+    }
   } catch (e) {
     console.error('Audio playback failed', e);
   }
@@ -284,7 +353,7 @@ export default function GameBoard() {
       const prevScore = prevScoresRef.current[team.id] || 0;
       if (team.score >= WIN_THRESHOLD && prevScore < WIN_THRESHOLD) {
         setShowCelebration(team.id);
-        playWinSound();
+        playWinSound(gameState.soundSettings);
         
         // Hide celebration after 8 seconds
         setTimeout(() => {
@@ -293,14 +362,14 @@ export default function GameBoard() {
       }
       prevScoresRef.current[team.id] = team.score;
     });
-  }, [teams]);
+  }, [teams, gameState.soundSettings]);
 
   useEffect(() => {
     if (strikes > prevStrikesRef.current) {
-      playWrongSound();
+      playWrongSound(gameState.soundSettings);
     }
     prevStrikesRef.current = strikes;
-  }, [strikes]);
+  }, [strikes, gameState.soundSettings]);
 
   useEffect(() => {
     const currentRevealedAnswers = currentQuestion?.answers.filter(a => a.revealed).map(a => a.id) || [];
@@ -318,16 +387,16 @@ export default function GameBoard() {
       
       if (currentRevealedCount === currentQuestion?.answers.length) {
         // All answers revealed
-        playCompleteSound();
+        playCompleteSound(gameState.soundSettings);
       } else {
         // Play sound based on rank (index)
-        playCorrectSound(newlyRevealedIndex !== undefined && newlyRevealedIndex !== -1 ? newlyRevealedIndex : 0);
+        playCorrectSound(newlyRevealedIndex !== undefined && newlyRevealedIndex !== -1 ? newlyRevealedIndex : 0, gameState.soundSettings);
       }
       
       prevRevealedCountRef.current = currentRevealedCount;
       prevRevealedAnswersRef.current = currentRevealedAnswers;
     }
-  }, [currentQuestion]);
+  }, [currentQuestion, gameState.soundSettings]);
 
   useEffect(() => {
     if (gameState.timerStartedAt) {
@@ -347,13 +416,14 @@ export default function GameBoard() {
 
   useEffect(() => {
     if (audioRef.current) {
+      audioRef.current.volume = gameState.soundSettings?.bgmVolume ?? 0.5;
       if (isMusicPlaying) {
         audioRef.current.play().catch(e => console.error("Audio play failed:", e));
       } else {
         audioRef.current.pause();
       }
     }
-  }, [isMusicPlaying]);
+  }, [isMusicPlaying, gameState.soundSettings?.bgmVolume]);
 
   if (!currentQuestion) {
     return <div className="flex items-center justify-center h-screen text-white text-2xl">Chưa có câu hỏi nào</div>;
@@ -410,7 +480,7 @@ export default function GameBoard() {
       {/* Background Music Audio Element */}
       <audio 
         ref={audioRef} 
-        src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3" 
+        src={gameState.soundSettings?.bgmUrl || "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"} 
         loop 
         preload="auto"
       />
@@ -483,10 +553,10 @@ export default function GameBoard() {
           <h3 className="text-xl md:text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide w-full truncate px-2">{teams[0].name}</h3>
           <motion.div 
             key={teams[0].score}
-            initial={{ scale: 1.5, color: '#fcd34d' }}
-            animate={{ scale: 1, color: '#facc15' }}
-            transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-            className="text-4xl md:text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+            initial={{ scale: 2, y: -30, color: '#ffffff', textShadow: '0 0 20px #ffffff, 0 0 40px #facc15' }}
+            animate={{ scale: 1, y: 0, color: '#facc15', textShadow: '0 4px 8px rgba(0,0,0,0.8)' }}
+            transition={{ type: 'spring', stiffness: 400, damping: 10, duration: 0.8 }}
+            className="text-4xl md:text-5xl font-black text-yellow-400"
           >
             {teams[0].score}
           </motion.div>
@@ -538,10 +608,10 @@ export default function GameBoard() {
           <h3 className="text-xl md:text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide w-full truncate px-2">{teams[1].name}</h3>
           <motion.div 
             key={teams[1].score}
-            initial={{ scale: 1.5, color: '#fcd34d' }}
-            animate={{ scale: 1, color: '#facc15' }}
-            transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-            className="text-4xl md:text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+            initial={{ scale: 2, y: -30, color: '#ffffff', textShadow: '0 0 20px #ffffff, 0 0 40px #facc15' }}
+            animate={{ scale: 1, y: 0, color: '#facc15', textShadow: '0 4px 8px rgba(0,0,0,0.8)' }}
+            transition={{ type: 'spring', stiffness: 400, damping: 10, duration: 0.8 }}
+            className="text-4xl md:text-5xl font-black text-yellow-400"
           >
             {teams[1].score}
           </motion.div>

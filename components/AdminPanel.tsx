@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useGame } from './GameProvider';
 import { Question, Answer, Team } from '@/lib/types';
-import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload, GripVertical } from 'lucide-react';
+import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload, GripVertical, Music } from 'lucide-react';
 import Papa from 'papaparse';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
@@ -23,13 +23,13 @@ export default function AdminPanel() {
     resetGame,
   } = useGame();
 
-  const [activeTab, setActiveTab] = useState<'control' | 'program' | 'teams' | 'questions' | 'settings'>('control');
+  const [activeTab, setActiveTab] = useState<'control' | 'program' | 'teams' | 'questions' | 'sounds' | 'settings'>('control');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Admin Settings State
   const [adminTheme, setAdminTheme] = useState('blue');
   const [adminFont, setAdminFont] = useState('font-sans');
-  const [tabOrder, setTabOrder] = useState(['control', 'program', 'teams', 'questions', 'settings']);
+  const [tabOrder, setTabOrder] = useState(['control', 'program', 'teams', 'questions', 'sounds', 'settings']);
 
   // Load settings
   React.useEffect(() => {
@@ -40,10 +40,13 @@ export default function AdminPanel() {
         if (parsed.adminTheme) setAdminTheme(parsed.adminTheme);
         if (parsed.adminFont) setAdminFont(parsed.adminFont);
         if (parsed.tabOrder) {
-          // Ensure 'program' is in the tabOrder if it was saved before this update
+          // Ensure 'program' and 'sounds' are in the tabOrder if it was saved before this update
           const loadedOrder = parsed.tabOrder;
           if (!loadedOrder.includes('program')) {
             loadedOrder.splice(1, 0, 'program');
+          }
+          if (!loadedOrder.includes('sounds')) {
+            loadedOrder.splice(4, 0, 'sounds');
           }
           setTabOrder(loadedOrder);
         }
@@ -79,6 +82,7 @@ export default function AdminPanel() {
     program: { id: 'program', label: 'Cài đặt Chương trình', icon: <Settings className="w-4 h-4" /> },
     teams: { id: 'teams', label: 'Quản lý Đội chơi', icon: <Users className="w-4 h-4" /> },
     questions: { id: 'questions', label: 'Quản lý Câu hỏi', icon: <HelpCircle className="w-4 h-4" /> },
+    sounds: { id: 'sounds', label: 'Cài đặt Âm thanh', icon: <Music className="w-4 h-4" /> },
     settings: { id: 'settings', label: 'Cài đặt Admin', icon: <Palette className="w-4 h-4" /> },
   };
 
@@ -170,6 +174,7 @@ export default function AdminPanel() {
           {activeTab === 'program' && <ProgramTab themeColor={getThemeClass('bg')} />}
           {activeTab === 'teams' && <TeamsTab themeColor={getThemeClass('bg')} />}
           {activeTab === 'questions' && <QuestionsTab themeColor={getThemeClass('bg')} />}
+          {activeTab === 'sounds' && <SoundsTab themeColor={getThemeClass('bg')} />}
           {activeTab === 'settings' && (
             <SettingsTab 
               adminTheme={adminTheme} setAdminTheme={setAdminTheme}
@@ -1092,6 +1097,179 @@ function QuestionEditor({ question, onSave, onCancel, themeColor }: { question: 
         <button onClick={() => onSave(edited)} className={`px-4 py-2 text-sm font-medium text-white ${themeColor} rounded-md flex items-center gap-2`}>
           <Save className="w-4 h-4" /> Lưu thay đổi
         </button>
+      </div>
+    </div>
+  );
+}
+
+function SoundsTab({ themeColor }: { themeColor: string }) {
+  const { gameState, updateGameState } = useGame();
+  const settings = gameState.soundSettings || {
+    bgmUrl: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
+    bgmVolume: 0.5,
+    correctSoundType: 'magic',
+    wrongSoundType: 'buzzer',
+    completeSoundType: 'triumphant',
+    winSoundType: 'fanfare',
+    customUrls: { correct: '', wrong: '', complete: '', win: '' }
+  };
+
+  const updateSettings = (updates: Partial<typeof settings>) => {
+    updateGameState({ soundSettings: { ...settings, ...updates } });
+  };
+
+  const updateCustomUrl = (key: 'correct' | 'wrong' | 'complete' | 'win', value: string) => {
+    updateSettings({
+      customUrls: { ...settings.customUrls, [key]: value }
+    });
+  };
+
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className={`${themeColor} text-white p-4 flex items-center gap-2`}>
+          <Music className="w-5 h-5" />
+          <h2 className="text-lg font-bold">Cài đặt Âm thanh</h2>
+        </div>
+        
+        <div className="p-6 space-y-8">
+          {/* Background Music */}
+          <div>
+            <h3 className="text-md font-semibold text-gray-800 mb-4 border-b pb-2">Nhạc nền (Background Music)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">URL Nhạc nền</label>
+                <input
+                  type="text"
+                  value={settings.bgmUrl}
+                  onChange={(e) => updateSettings({ bgmUrl: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  placeholder="https://example.com/music.mp3"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Âm lượng ({Math.round(settings.bgmVolume * 100)}%)</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={settings.bgmVolume}
+                  onChange={(e) => updateSettings({ bgmVolume: parseFloat(e.target.value) })}
+                  className="w-full mt-2"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Sound Effects */}
+          <div>
+            <h3 className="text-md font-semibold text-gray-800 mb-4 border-b pb-2">Hiệu ứng âm thanh (Sound Effects)</h3>
+            
+            <div className="space-y-6">
+              {/* Correct Answer */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <label className="block text-sm font-bold text-gray-800 mb-2">Mở đáp án đúng</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <select
+                    value={settings.correctSoundType}
+                    onChange={(e) => updateSettings({ correctSoundType: e.target.value as any })}
+                    className="p-2 border border-gray-300 rounded-md bg-white"
+                  >
+                    <option value="magic">Phép thuật (Giải Mã Phái Đẹp)</option>
+                    <option value="chime">Chuông vang (Chime)</option>
+                    <option value="bell">Chuông nhỏ (Bell)</option>
+                    <option value="custom">Tùy chỉnh (URL)</option>
+                  </select>
+                  {settings.correctSoundType === 'custom' && (
+                    <input
+                      type="text"
+                      value={settings.customUrls?.correct || ''}
+                      onChange={(e) => updateCustomUrl('correct', e.target.value)}
+                      placeholder="URL âm thanh tùy chỉnh"
+                      className="p-2 border border-gray-300 rounded-md"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Wrong Answer */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <label className="block text-sm font-bold text-gray-800 mb-2">Đáp án sai (Strike)</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <select
+                    value={settings.wrongSoundType}
+                    onChange={(e) => updateSettings({ wrongSoundType: e.target.value as any })}
+                    className="p-2 border border-gray-300 rounded-md bg-white"
+                  >
+                    <option value="buzzer">Còi báo lỗi (Buzzer)</option>
+                    <option value="horn">Còi hơi (Horn)</option>
+                    <option value="custom">Tùy chỉnh (URL)</option>
+                  </select>
+                  {settings.wrongSoundType === 'custom' && (
+                    <input
+                      type="text"
+                      value={settings.customUrls?.wrong || ''}
+                      onChange={(e) => updateCustomUrl('wrong', e.target.value)}
+                      placeholder="URL âm thanh tùy chỉnh"
+                      className="p-2 border border-gray-300 rounded-md"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Complete Question */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <label className="block text-sm font-bold text-gray-800 mb-2">Hoàn thành câu hỏi</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <select
+                    value={settings.completeSoundType}
+                    onChange={(e) => updateSettings({ completeSoundType: e.target.value as any })}
+                    className="p-2 border border-gray-300 rounded-md bg-white"
+                  >
+                    <option value="triumphant">Chiến thắng (Triumphant)</option>
+                    <option value="fanfare">Kèn chào mừng (Fanfare)</option>
+                    <option value="custom">Tùy chỉnh (URL)</option>
+                  </select>
+                  {settings.completeSoundType === 'custom' && (
+                    <input
+                      type="text"
+                      value={settings.customUrls?.complete || ''}
+                      onChange={(e) => updateCustomUrl('complete', e.target.value)}
+                      placeholder="URL âm thanh tùy chỉnh"
+                      className="p-2 border border-gray-300 rounded-md"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Win Game */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <label className="block text-sm font-bold text-gray-800 mb-2">Đội chiến thắng</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <select
+                    value={settings.winSoundType}
+                    onChange={(e) => updateSettings({ winSoundType: e.target.value as any })}
+                    className="p-2 border border-gray-300 rounded-md bg-white"
+                  >
+                    <option value="fanfare">Kèn chiến thắng hoành tráng</option>
+                    <option value="applause">Tiếng vỗ tay (Applause)</option>
+                    <option value="custom">Tùy chỉnh (URL)</option>
+                  </select>
+                  {settings.winSoundType === 'custom' && (
+                    <input
+                      type="text"
+                      value={settings.customUrls?.win || ''}
+                      onChange={(e) => updateCustomUrl('win', e.target.value)}
+                      placeholder="URL âm thanh tùy chỉnh"
+                      className="p-2 border border-gray-300 rounded-md"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

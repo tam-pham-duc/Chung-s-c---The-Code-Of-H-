@@ -22,6 +22,21 @@ export interface Team {
   score: number;
 }
 
+export interface SoundSettings {
+  bgmUrl: string;
+  bgmVolume: number;
+  correctSoundType: 'chime' | 'bell' | 'magic' | 'custom';
+  wrongSoundType: 'buzzer' | 'horn' | 'custom';
+  completeSoundType: 'triumphant' | 'fanfare' | 'custom';
+  winSoundType: 'fanfare' | 'applause' | 'custom';
+  customUrls?: {
+    correct?: string;
+    wrong?: string;
+    complete?: string;
+    win?: string;
+  };
+}
+
 export interface GameState {
   programName: string;
   programTheme: string;
@@ -39,4 +54,5 @@ export interface GameState {
   timerDuration: number;
   timerStartedAt: number | null;
   showTimer: boolean;
+  soundSettings?: SoundSettings;
 }

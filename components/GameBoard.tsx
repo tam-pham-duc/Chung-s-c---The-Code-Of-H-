@@ -499,43 +499,46 @@ export default function GameBoard() {
       </button>
 
       {/* Header & Timer */}
-      <div className="z-10 flex flex-col items-center mb-6 w-full max-w-6xl relative min-h-[120px] justify-center">
-        {(gameState.showTimer || gameState.timerStartedAt || isSuddenDeathActive) && (
-          <motion.div 
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="flex items-center gap-4 bg-black/40 backdrop-blur-md border border-rose-500/50 px-8 py-3 rounded-full shadow-[0_0_30px_rgba(244,63,94,0.3)] mb-4"
-          >
-            <Clock className={`w-8 h-8 ${displayTime <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-300'}`} />
-            <span className={`text-5xl font-black tracking-widest ${displayTime <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-100'}`}>
-              {displayTime}
-            </span>
-          </motion.div>
-        )}
-
-        <div className="text-center">
+      <div className="z-10 flex flex-col items-center mb-4 w-full max-w-6xl relative justify-center mt-2">
+        <div className="text-center mb-4">
           <motion.h1 
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="text-3xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-500 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-wider uppercase"
+            className="text-3xl md:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-wider uppercase"
           >
             {gameState.programName || 'CHUNG SỨC'}
-            {gameState.programNameEn && <span className="text-xl md:text-3xl lg:text-4xl ml-4 opacity-80">- {gameState.programNameEn}</span>}
+            {gameState.programNameEn && <span className="text-xl md:text-2xl lg:text-3xl ml-3 opacity-80">- {gameState.programNameEn}</span>}
           </motion.h1>
           <motion.h2 
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="text-lg md:text-xl lg:text-2xl font-bold text-pink-100 drop-shadow-md mt-2 tracking-widest uppercase"
+            className="text-base md:text-lg lg:text-xl font-bold text-pink-100 drop-shadow-md mt-1 tracking-widest uppercase"
           >
             {gameState.programTheme || 'Giải Mã Phái Đẹp'}
             {gameState.programThemeEn && <span className="opacity-80 ml-2">- {gameState.programThemeEn}</span>}
           </motion.h2>
         </div>
+
+        <AnimatePresence>
+          {(gameState.showTimer || gameState.timerStartedAt || isSuddenDeathActive) && (
+            <motion.div 
+              initial={{ y: -20, opacity: 0, scale: 0.9 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: -20, opacity: 0, scale: 0.9 }}
+              className="flex items-center gap-4 bg-black/60 backdrop-blur-md border border-rose-500/50 px-8 py-2 rounded-full shadow-[0_0_30px_rgba(244,63,94,0.4)]"
+            >
+              <Clock className={`w-6 h-6 md:w-8 md:h-8 ${displayTime <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-300'}`} />
+              <span className={`text-4xl md:text-5xl font-black tracking-widest ${displayTime <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-100'}`}>
+                {displayTime}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Scoreboard */}
-      <div className="z-10 grid grid-cols-3 gap-4 w-full max-w-6xl px-4 mb-8 items-start">
+      <div className="z-10 grid grid-cols-3 gap-4 md:gap-8 w-full max-w-5xl px-4 mb-8 items-start">
         {/* Team 1 */}
         <div className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === teams[0].id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative mt-6`}>
           <div className="absolute -top-5 w-full flex justify-center">
@@ -564,9 +567,9 @@ export default function GameBoard() {
 
         {/* Current Points */}
         <div className="flex flex-col items-center justify-start relative pt-2">
-          <div className="h-10 mb-2 flex items-end justify-center w-full">
+          <div className="h-8 mb-2 flex items-end justify-center w-full">
             {gameState.isStealing && (
-              <div className="bg-orange-600/80 backdrop-blur text-white px-4 md:px-6 py-1.5 rounded-full font-bold uppercase tracking-widest border border-orange-400 shadow-[0_0_30px_rgba(234,88,12,0.6)] animate-pulse whitespace-nowrap text-xs md:text-sm">
+              <div className="bg-orange-600/80 backdrop-blur text-white px-4 py-1 rounded-full font-bold uppercase tracking-widest border border-orange-400 shadow-[0_0_30px_rgba(234,88,12,0.6)] animate-pulse whitespace-nowrap text-xs">
                 CƠ HỘI CƯỚP ĐIỂM
               </div>
             )}
@@ -576,19 +579,19 @@ export default function GameBoard() {
             initial={{ scale: 1.3, borderColor: '#fcd34d', boxShadow: '0 0 60px rgba(250,204,21,0.8)' }}
             animate={{ scale: 1, borderColor: 'rgba(250,204,21,0.8)', boxShadow: '0 0 40px rgba(250,204,21,0.4)' }}
             transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-            className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 rounded-full w-24 h-24 md:w-32 md:h-32 flex items-center justify-center shrink-0"
+            className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 rounded-full w-24 h-24 md:w-28 md:h-28 flex items-center justify-center shrink-0"
           >
             <motion.span 
               key={`text-${tempScore}`}
               initial={{ scale: 1.2, color: '#fcd34d' }}
               animate={{ scale: 1, color: '#ffffff' }}
               transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-              className="text-4xl md:text-6xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+              className="text-4xl md:text-5xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
             >
               {tempScore}
             </motion.span>
           </motion.div>
-          <div className="mt-3 text-yellow-400/90 font-bold text-xs md:text-sm tracking-[0.2em] uppercase text-center">Điểm Tích Lũy</div>
+          <div className="mt-3 text-yellow-400/90 font-bold text-xs tracking-[0.2em] uppercase text-center">Điểm Tích Lũy</div>
         </div>
 
         {/* Team 2 */}
@@ -621,19 +624,14 @@ export default function GameBoard() {
       {/* Question */}
       <motion.div 
         key={currentQuestion.id}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, type: 'spring', bounce: 0.4 }}
-        className="z-10 w-full max-w-4xl bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-6 md:p-8 mb-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="z-10 w-full max-w-4xl bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-indigo-900/80 backdrop-blur-md border border-white/20 rounded-2xl p-6 md:p-8 mb-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
       >
-        <motion.h3 
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.8, type: 'spring', bounce: 0.5, delay: 0.2 }}
-          className="text-xl md:text-3xl lg:text-4xl font-bold text-white leading-relaxed drop-shadow-md"
-        >
+        <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-relaxed drop-shadow-md">
           {currentQuestion.text}
-        </motion.h3>
+        </h3>
         <div className="mt-4 text-pink-300 font-medium tracking-wider uppercase text-xs md:text-sm">
           {currentQuestion.isSuddenDeath ? (
             <span className="text-rose-400 font-bold animate-pulse">✨ Câu hỏi phụ - Sudden Death ✨</span>
@@ -732,17 +730,17 @@ export default function GameBoard() {
       </AnimatePresence>
 
       {/* Small Strikes Indicator (Bottom) */}
-      <div className="fixed bottom-8 flex gap-3 z-10">
+      <div className="fixed bottom-6 flex gap-3 z-10 bg-black/40 backdrop-blur-md px-6 py-3 rounded-full border border-white/10 shadow-xl">
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
+            className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
               i < strikes 
-                ? 'bg-rose-500 border-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.6)] scale-110' 
-                : 'bg-white/5 border-white/20 backdrop-blur-sm'
+                ? 'bg-rose-600 border-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.8)] scale-110' 
+                : 'bg-white/5 border-white/20'
             }`}
           >
-            {i < strikes && <X className="w-8 h-8 text-white" strokeWidth={3} />}
+            {i < strikes && <X className="w-6 h-6 md:w-8 md:h-8 text-white" strokeWidth={3} />}
           </div>
         ))}
       </div>

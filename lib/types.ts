@@ -1,6 +1,7 @@
 export interface Answer {
   id: string;
   text: string;
+  textEn?: string;
   points: number;
   revealed: boolean;
 }
@@ -8,6 +9,7 @@ export interface Answer {
 export interface Question {
   id: string;
   text: string;
+  textEn?: string;
   answers: Answer[];
   multiplier: number;
   round: number;

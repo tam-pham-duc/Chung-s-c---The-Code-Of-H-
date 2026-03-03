@@ -618,11 +618,12 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
     const newQ: Question = {
       id: `q${Date.now()}`,
       text: 'Câu hỏi mới',
+      textEn: '',
       round: 1,
       multiplier: 1,
       timeLimit: 30,
       answers: [
-        { id: `a${Date.now()}-1`, text: 'Đáp án 1', points: 10, revealed: false }
+        { id: `a${Date.now()}-1`, text: 'Đáp án 1', textEn: '', points: 10, revealed: false }
       ]
     };
     addQuestion(newQ);
@@ -645,6 +646,7 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
       const row: any = {
         id: q.id,
         text: q.text,
+        textEn: q.textEn || '',
         round: q.round,
         multiplier: q.multiplier,
         timeLimit: q.timeLimit,
@@ -653,6 +655,7 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
       
       q.answers.forEach((ans, i) => {
         row[`answer${i+1}_text`] = ans.text;
+        row[`answer${i+1}_textEn`] = ans.textEn || '';
         row[`answer${i+1}_points`] = ans.points;
       });
       
@@ -701,6 +704,7 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
                 const q: any = {
                   id: normalizedRow.id || `q${Date.now()}-${index}`,
                   text: normalizedRow.text || normalizedRow.question || '',
+                  textEn: normalizedRow.texten || normalizedRow.questionen || '',
                   round: parseInt(normalizedRow.round) || 1,
                   multiplier: parseInt(normalizedRow.multiplier) || 1,
                   timeLimit: parseInt(normalizedRow.timelimit || normalizedRow['time limit']) || 30,
@@ -711,12 +715,14 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
                 // Extract answers (assuming up to 8 answers)
                 for (let i = 1; i <= 8; i++) {
                   const ansText = normalizedRow[`answer${i}_text`] || normalizedRow[`answer${i}`] || normalizedRow[`answer ${i}`];
+                  const ansTextEn = normalizedRow[`answer${i}_texten`] || normalizedRow[`answer${i}en`] || normalizedRow[`answer ${i} en`];
                   const ansPoints = normalizedRow[`answer${i}_points`] || normalizedRow[`points${i}`] || normalizedRow[`points ${i}`];
                   
                   if (ansText) {
                     q.answers.push({
                       id: `a${Date.now()}-${index}-${i}`,
                       text: ansText,
+                      textEn: ansTextEn || '',
                       points: parseInt(ansPoints) || 0,
                       revealed: false
                     });
@@ -917,6 +923,7 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
                                 <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded">⏱ {q.timeLimit || 30}s</span>
                               </div>
                               <h3 className="text-lg font-medium text-gray-900">{q.text}</h3>
+                              {q.textEn && <p className="text-sm text-gray-600 italic mt-0.5">{q.textEn}</p>}
                               <p className="text-sm text-gray-500 mt-1">{q.answers.length} đáp án</p>
                             </div>
                           </div>
@@ -971,7 +978,7 @@ function QuestionEditor({ question, onSave, onCancel, themeColor }: { question: 
   const addAnswer = () => {
     setEdited({
       ...edited,
-      answers: [...edited.answers, { id: `a${Date.now()}`, text: '', points: 0, revealed: false }]
+      answers: [...edited.answers, { id: `a${Date.now()}`, text: '', textEn: '', points: 0, revealed: false }]
     });
   };
 
@@ -984,14 +991,27 @@ function QuestionEditor({ question, onSave, onCancel, themeColor }: { question: 
   return (
     <div className="p-6 bg-blue-50/50">
       <div className="space-y-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nội dung câu hỏi</label>
-          <input
-            type="text"
-            value={edited.text}
-            onChange={(e) => setEdited({ ...edited, text: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nội dung câu hỏi (Tiếng Việt)</label>
+            <input
+              type="text"
+              value={edited.text}
+              onChange={(e) => setEdited({ ...edited, text: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Nhập câu hỏi bằng tiếng Việt"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nội dung câu hỏi (Tiếng Anh - Tùy chọn)</label>
+            <input
+              type="text"
+              value={edited.textEn || ''}
+              onChange={(e) => setEdited({ ...edited, textEn: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter question in English"
+            />
+          </div>
         </div>
         
         <div className="flex gap-4">
@@ -1053,38 +1073,49 @@ function QuestionEditor({ question, onSave, onCancel, themeColor }: { question: 
           </button>
         </div>
         
-        <div className="space-y-2">
+        <div className="space-y-3">
           {edited.answers.map((ans, idx) => (
-            <div key={ans.id} className="flex items-center gap-2">
-              <span className="w-6 text-center text-sm font-medium text-gray-500">{idx + 1}.</span>
-              <input
-                type="text"
-                value={ans.text}
-                onChange={(e) => handleAnswerChange(idx, 'text', e.target.value)}
-                placeholder="Nội dung đáp án"
-                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm"
-              />
-              <input
-                type="number"
-                value={ans.points}
-                onChange={(e) => handleAnswerChange(idx, 'points', parseInt(e.target.value) || 0)}
-                placeholder="Điểm"
-                className="w-20 px-3 py-1.5 border border-gray-300 rounded-md text-sm"
-              />
-              <button
-                onClick={() => handleAnswerChange(idx, 'revealed', !ans.revealed)}
-                className={`p-1.5 rounded flex items-center justify-center transition-colors ${
-                  ans.revealed 
-                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
-                }`}
-                title={ans.revealed ? "Đã lật (Nhấn để ẩn)" : "Đang ẩn (Nhấn để lật)"}
-              >
-                {ans.revealed ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-              </button>
-              <button onClick={() => removeAnswer(idx)} className="p-1.5 text-red-500 hover:bg-red-50 rounded">
-                <Trash2 className="w-4 h-4" />
-              </button>
+            <div key={ans.id} className="flex flex-col md:flex-row items-start md:items-center gap-2 bg-white p-2 rounded-md border border-gray-100 shadow-sm">
+              <span className="w-6 text-center text-sm font-medium text-gray-500 hidden md:inline-block">{idx + 1}.</span>
+              <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={ans.text}
+                  onChange={(e) => handleAnswerChange(idx, 'text', e.target.value)}
+                  placeholder="Đáp án (Tiếng Việt)"
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+                />
+                <input
+                  type="text"
+                  value={ans.textEn || ''}
+                  onChange={(e) => handleAnswerChange(idx, 'textEn', e.target.value)}
+                  placeholder="Answer (English)"
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2 w-full md:w-auto justify-end mt-2 md:mt-0">
+                <input
+                  type="number"
+                  value={ans.points}
+                  onChange={(e) => handleAnswerChange(idx, 'points', parseInt(e.target.value) || 0)}
+                  placeholder="Điểm"
+                  className="w-20 px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+                />
+                <button
+                  onClick={() => handleAnswerChange(idx, 'revealed', !ans.revealed)}
+                  className={`p-1.5 rounded flex items-center justify-center transition-colors ${
+                    ans.revealed 
+                      ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                      : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                  }`}
+                  title={ans.revealed ? "Đã lật (Nhấn để ẩn)" : "Đang ẩn (Nhấn để lật)"}
+                >
+                  {ans.revealed ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
+                <button onClick={() => removeAnswer(idx)} className="p-1.5 text-red-500 hover:bg-red-50 rounded">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

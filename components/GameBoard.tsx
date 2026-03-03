@@ -461,12 +461,7 @@ export default function GameBoard() {
     );
   }
 
-  // Ensure we always show an even number of slots (e.g., 8 slots max)
-  const maxAnswers = Math.max(currentQuestion.answers.length, 6);
   const displayAnswers = [...currentQuestion.answers];
-  while (displayAnswers.length < maxAnswers) {
-    displayAnswers.push({ id: `empty-${displayAnswers.length}`, text: '', points: 0, revealed: false });
-  }
 
   const isSuddenDeathActive = currentQuestion.isSuddenDeath && introPlayedFor === currentQuestion.id;
 
@@ -632,6 +627,11 @@ export default function GameBoard() {
         <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-relaxed drop-shadow-md">
           {currentQuestion.text}
         </h3>
+        {currentQuestion.textEn && (
+          <h4 className="text-lg md:text-xl lg:text-2xl font-medium text-pink-200 mt-2 leading-relaxed drop-shadow-md italic">
+            {currentQuestion.textEn}
+          </h4>
+        )}
         <div className="mt-4 text-pink-300 font-medium tracking-wider uppercase text-xs md:text-sm">
           {currentQuestion.isSuddenDeath ? (
             <span className="text-rose-400 font-bold animate-pulse">✨ Câu hỏi phụ - Sudden Death ✨</span>
@@ -674,8 +674,15 @@ export default function GameBoard() {
                       <div className={`flex items-center justify-center w-16 h-full bg-gradient-to-br ${theme.gradient} border-r border-white/50`}>
                         {theme.icon}
                       </div>
-                      <div className={`flex-grow px-6 text-xl md:text-2xl font-bold ${theme.text} uppercase truncate`}>
-                        {answer.text}
+                      <div className={`flex-grow px-6 flex flex-col justify-center truncate`}>
+                        <div className={`text-xl md:text-2xl font-bold ${theme.text} uppercase truncate`}>
+                          {answer.text}
+                        </div>
+                        {answer.textEn && (
+                          <div className={`text-sm md:text-base font-medium ${theme.text} opacity-80 italic truncate`}>
+                            {answer.textEn}
+                          </div>
+                        )}
                       </div>
                       <div className={`w-24 h-full bg-gradient-to-br ${theme.gradient} flex items-center justify-center text-3xl font-black text-white drop-shadow-md border-l border-white/50`}>
                         {answer.points}

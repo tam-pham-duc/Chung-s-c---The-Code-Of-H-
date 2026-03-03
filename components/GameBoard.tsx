@@ -3,23 +3,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGame } from './GameProvider';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Crown, Gem, Heart, Star, Sparkles, Flower2, Flame, Clock } from 'lucide-react';
+import { X, Crown, Gem, Heart, Star, Sparkles, Flower2, Flame, Clock, Music, Music2 } from 'lucide-react';
 
 // Sound effect generators using Web Audio API
-const playCorrectSound = () => {
+const playCorrectSound = (rank: number = 0) => {
   try {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
     
     // Play a magical chime sound (Giải Mã Phái Đẹp theme)
-    const playNote = (freq: number, startTime: number, duration: number) => {
+    const playNote = (freq: number, startTime: number, duration: number, type: OscillatorType = 'sine') => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
       
-      osc.type = 'sine';
+      osc.type = type;
       osc.frequency.setValueAtTime(freq, startTime);
       
       gain.gain.setValueAtTime(0, startTime);
@@ -31,10 +31,66 @@ const playCorrectSound = () => {
     };
 
     const now = ctx.currentTime;
-    playNote(523.25, now, 0.4); // C5
-    playNote(659.25, now + 0.1, 0.4); // E5
-    playNote(783.99, now + 0.2, 0.6); // G5
-    playNote(1046.50, now + 0.3, 1.0); // C6
+    
+    if (rank === 0) {
+      // Top answer: Epic magical chime
+      playNote(523.25, now, 0.4); // C5
+      playNote(659.25, now + 0.1, 0.4); // E5
+      playNote(783.99, now + 0.2, 0.6); // G5
+      playNote(1046.50, now + 0.3, 1.0); // C6
+      playNote(1318.51, now + 0.4, 1.5, 'triangle'); // E6
+    } else if (rank === 1 || rank === 2) {
+      // High answers: Good chime
+      playNote(523.25, now, 0.4); // C5
+      playNote(659.25, now + 0.1, 0.4); // E5
+      playNote(783.99, now + 0.2, 0.8); // G5
+    } else {
+      // Lower answers: Simple chime
+      playNote(523.25, now, 0.4); // C5
+      playNote(659.25, now + 0.1, 0.6); // E5
+    }
+  } catch (e) {
+    console.error('Audio playback failed', e);
+  }
+};
+
+const playCompleteSound = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    const playNote = (freq: number, startTime: number, duration: number, type: OscillatorType = 'sine') => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, startTime);
+      
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.4, startTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = ctx.currentTime;
+    // Triumphant chord progression
+    playNote(523.25, now, 0.5); // C5
+    playNote(659.25, now, 0.5); // E5
+    playNote(783.99, now, 0.5); // G5
+    
+    playNote(698.46, now + 0.3, 0.5); // F5
+    playNote(880.00, now + 0.3, 0.5); // A5
+    playNote(1046.50, now + 0.3, 0.5); // C6
+    
+    playNote(783.99, now + 0.6, 1.5, 'triangle'); // G5
+    playNote(987.77, now + 0.6, 1.5, 'triangle'); // B5
+    playNote(1174.66, now + 0.6, 1.5, 'triangle'); // D6
+    playNote(1567.98, now + 0.6, 2.0, 'sine'); // G6
   } catch (e) {
     console.error('Audio playback failed', e);
   }
@@ -181,6 +237,8 @@ export default function GameBoard() {
   const [introPlayedFor, setIntroPlayedFor] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [showCelebration, setShowCelebration] = useState<string | null>(null);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const displayTime = gameState.timerStartedAt 
     ? Math.max(0, (gameState.timerDuration || 30) - Math.floor((currentTime - gameState.timerStartedAt) / 1000))
@@ -216,6 +274,7 @@ export default function GameBoard() {
   const prevRevealedCountRef = useRef(0);
   const prevQuestionIdRef = useRef<string | null>(null);
   const prevScoresRef = useRef<Record<string, number>>({});
+  const prevRevealedAnswersRef = useRef<string[]>([]);
 
   useEffect(() => {
     // Check for winning threshold (e.g., 300 points)
@@ -244,16 +303,29 @@ export default function GameBoard() {
   }, [strikes]);
 
   useEffect(() => {
-    const currentRevealedCount = currentQuestion?.answers.filter(a => a.revealed).length || 0;
+    const currentRevealedAnswers = currentQuestion?.answers.filter(a => a.revealed).map(a => a.id) || [];
+    const currentRevealedCount = currentRevealedAnswers.length;
     
     if (currentQuestion?.id !== prevQuestionIdRef.current) {
       // Question changed, reset tracking
       prevQuestionIdRef.current = currentQuestion?.id || null;
       prevRevealedCountRef.current = currentRevealedCount;
+      prevRevealedAnswersRef.current = currentRevealedAnswers;
     } else if (currentRevealedCount > prevRevealedCountRef.current) {
-      // New answer revealed
-      playCorrectSound();
+      // Find the newly revealed answer
+      const newlyRevealedId = currentRevealedAnswers.find(id => !prevRevealedAnswersRef.current.includes(id));
+      const newlyRevealedIndex = currentQuestion?.answers.findIndex(a => a.id === newlyRevealedId);
+      
+      if (currentRevealedCount === currentQuestion?.answers.length) {
+        // All answers revealed
+        playCompleteSound();
+      } else {
+        // Play sound based on rank (index)
+        playCorrectSound(newlyRevealedIndex !== undefined && newlyRevealedIndex !== -1 ? newlyRevealedIndex : 0);
+      }
+      
       prevRevealedCountRef.current = currentRevealedCount;
+      prevRevealedAnswersRef.current = currentRevealedAnswers;
     }
   }, [currentQuestion]);
 
@@ -272,6 +344,16 @@ export default function GameBoard() {
       return () => clearTimeout(timer);
     }
   }, [currentQuestion, introPlayedFor]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isMusicPlaying) {
+        audioRef.current.play().catch(e => console.error("Audio play failed:", e));
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isMusicPlaying]);
 
   if (!currentQuestion) {
     return <div className="flex items-center justify-center h-screen text-white text-2xl">Chưa có câu hỏi nào</div>;
@@ -324,6 +406,27 @@ export default function GameBoard() {
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 pointer-events-none mix-blend-overlay fixed"></div>
       <div className={`absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] pointer-events-none fixed ${isSuddenDeathActive ? 'from-red-500/20' : 'from-pink-500/20'} via-transparent to-transparent`}></div>
       <div className={`absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] pointer-events-none fixed ${isSuddenDeathActive ? 'from-orange-500/20' : 'from-purple-500/20'} via-transparent to-transparent`}></div>
+
+      {/* Background Music Audio Element */}
+      <audio 
+        ref={audioRef} 
+        src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3" 
+        loop 
+        preload="auto"
+      />
+
+      {/* Music Toggle Button */}
+      <button
+        onClick={() => setIsMusicPlaying(!isMusicPlaying)}
+        className={`fixed top-4 right-4 z-50 p-3 rounded-full backdrop-blur-md border-2 transition-all duration-300 shadow-lg ${
+          isMusicPlaying 
+            ? 'bg-pink-500/20 border-pink-400 text-pink-200 shadow-[0_0_15px_rgba(244,114,182,0.5)]' 
+            : 'bg-white/5 border-white/20 text-white/50 hover:bg-white/10'
+        }`}
+        title={isMusicPlaying ? "Tắt nhạc nền" : "Bật nhạc nền"}
+      >
+        {isMusicPlaying ? <Music className="w-6 h-6 animate-pulse" /> : <Music2 className="w-6 h-6" />}
+      </button>
 
       {/* Header & Timer */}
       <div className="z-10 flex flex-col items-center mb-6 w-full max-w-6xl relative min-h-[120px] justify-center">

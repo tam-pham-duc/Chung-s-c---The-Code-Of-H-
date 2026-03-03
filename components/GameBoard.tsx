@@ -319,19 +319,19 @@ export default function GameBoard() {
   const isSuddenDeathActive = currentQuestion.isSuddenDeath && introPlayedFor === currentQuestion.id;
 
   return (
-    <div className={`relative flex flex-col items-center justify-center min-h-screen overflow-hidden font-sans transition-colors duration-1000 ${isSuddenDeathActive ? 'bg-gradient-to-br from-rose-950 via-red-900 to-orange-950' : 'bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-950'}`}>
+    <div className={`relative flex flex-col items-center justify-start min-h-screen overflow-y-auto overflow-x-hidden font-sans py-8 px-4 transition-colors duration-1000 ${isSuddenDeathActive ? 'bg-gradient-to-br from-rose-950 via-red-900 to-orange-950' : 'bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-950'}`}>
       {/* Background decorations */}
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 pointer-events-none mix-blend-overlay"></div>
-      <div className={`absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] pointer-events-none ${isSuddenDeathActive ? 'from-red-500/20' : 'from-pink-500/20'} via-transparent to-transparent`}></div>
-      <div className={`absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] pointer-events-none ${isSuddenDeathActive ? 'from-orange-500/20' : 'from-purple-500/20'} via-transparent to-transparent`}></div>
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 pointer-events-none mix-blend-overlay fixed"></div>
+      <div className={`absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] pointer-events-none fixed ${isSuddenDeathActive ? 'from-red-500/20' : 'from-pink-500/20'} via-transparent to-transparent`}></div>
+      <div className={`absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] pointer-events-none fixed ${isSuddenDeathActive ? 'from-orange-500/20' : 'from-purple-500/20'} via-transparent to-transparent`}></div>
 
       {/* Header & Timer */}
-      <div className="z-10 flex flex-col items-center mb-8 mt-4 w-full px-8">
+      <div className="z-10 flex flex-col items-center mb-6 w-full max-w-6xl relative min-h-[120px] justify-center">
         {(gameState.showTimer || gameState.timerStartedAt || isSuddenDeathActive) && (
           <motion.div 
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="absolute top-8 flex items-center gap-4 bg-black/40 backdrop-blur-md border border-rose-500/50 px-8 py-3 rounded-full shadow-[0_0_30px_rgba(244,63,94,0.3)]"
+            className="flex items-center gap-4 bg-black/40 backdrop-blur-md border border-rose-500/50 px-8 py-3 rounded-full shadow-[0_0_30px_rgba(244,63,94,0.3)] mb-4"
           >
             <Clock className={`w-8 h-8 ${displayTime <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-300'}`} />
             <span className={`text-5xl font-black tracking-widest ${displayTime <= 5 ? 'text-red-500 animate-pulse' : 'text-rose-100'}`}>
@@ -340,20 +340,20 @@ export default function GameBoard() {
           </motion.div>
         )}
 
-        <div className={`text-center ${(gameState.showTimer || gameState.timerStartedAt || isSuddenDeathActive) ? 'mt-20' : ''}`}>
+        <div className="text-center">
           <motion.h1 
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-500 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-wider uppercase"
+            className="text-3xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-500 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-wider uppercase"
           >
             {gameState.programName || 'CHUNG SỨC'}
-            {gameState.programNameEn && <span className="text-2xl md:text-4xl ml-4 opacity-80">- {gameState.programNameEn}</span>}
+            {gameState.programNameEn && <span className="text-xl md:text-3xl lg:text-4xl ml-4 opacity-80">- {gameState.programNameEn}</span>}
           </motion.h1>
           <motion.h2 
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="text-xl md:text-2xl font-bold text-pink-100 drop-shadow-md mt-2 tracking-widest uppercase"
+            className="text-lg md:text-xl lg:text-2xl font-bold text-pink-100 drop-shadow-md mt-2 tracking-widest uppercase"
           >
             {gameState.programTheme || 'Giải Mã Phái Đẹp'}
             {gameState.programThemeEn && <span className="opacity-80 ml-2">- {gameState.programThemeEn}</span>}
@@ -362,77 +362,83 @@ export default function GameBoard() {
       </div>
 
       {/* Scoreboard */}
-      <div className="z-10 flex w-full max-w-6xl justify-between px-4 mb-8">
+      <div className="z-10 grid grid-cols-3 gap-4 w-full max-w-6xl px-4 mb-8 items-start">
         {/* Team 1 */}
-        <div className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === teams[0].id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 min-w-[200px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative`}>
-          {gameState.controllingTeamId === teams[0].id && (
-            <div className="absolute -top-4 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-bounce">
-              Đang kiểm soát
-            </div>
-          )}
-          {gameState.isStealing && gameState.stealingTeamId === teams[0].id && (
-            <div className="absolute -top-4 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-pulse">
-              Đang cướp điểm
-            </div>
-          )}
-          <h3 className="text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide">{teams[0].name}</h3>
+        <div className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === teams[0].id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative mt-6`}>
+          <div className="absolute -top-5 w-full flex justify-center">
+            {gameState.controllingTeamId === teams[0].id && (
+              <div className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-bounce whitespace-nowrap">
+                Đang kiểm soát
+              </div>
+            )}
+            {gameState.isStealing && gameState.stealingTeamId === teams[0].id && (
+              <div className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-pulse whitespace-nowrap">
+                Đang cướp điểm
+              </div>
+            )}
+          </div>
+          <h3 className="text-xl md:text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide w-full truncate px-2">{teams[0].name}</h3>
           <motion.div 
             key={teams[0].score}
             initial={{ scale: 1.5, color: '#fcd34d' }}
             animate={{ scale: 1, color: '#facc15' }}
             transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-            className="text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+            className="text-4xl md:text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
           >
             {teams[0].score}
           </motion.div>
         </div>
 
         {/* Current Points */}
-        <div className="flex flex-col items-center justify-center relative">
-          {gameState.isStealing && (
-            <div className="absolute -top-12 bg-orange-600/80 backdrop-blur text-white px-6 py-2 rounded-full font-bold uppercase tracking-widest border border-orange-400 shadow-[0_0_30px_rgba(234,88,12,0.6)] animate-pulse whitespace-nowrap">
-              CƠ HỘI CƯỚP ĐIỂM
-            </div>
-          )}
+        <div className="flex flex-col items-center justify-start relative pt-2">
+          <div className="h-10 mb-2 flex items-end justify-center w-full">
+            {gameState.isStealing && (
+              <div className="bg-orange-600/80 backdrop-blur text-white px-4 md:px-6 py-1.5 rounded-full font-bold uppercase tracking-widest border border-orange-400 shadow-[0_0_30px_rgba(234,88,12,0.6)] animate-pulse whitespace-nowrap text-xs md:text-sm">
+                CƠ HỘI CƯỚP ĐIỂM
+              </div>
+            )}
+          </div>
           <motion.div 
             key={tempScore}
             initial={{ scale: 1.3, borderColor: '#fcd34d', boxShadow: '0 0 60px rgba(250,204,21,0.8)' }}
             animate={{ scale: 1, borderColor: 'rgba(250,204,21,0.8)', boxShadow: '0 0 40px rgba(250,204,21,0.4)' }}
             transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-            className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 rounded-full w-32 h-32 flex items-center justify-center"
+            className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 rounded-full w-24 h-24 md:w-32 md:h-32 flex items-center justify-center shrink-0"
           >
             <motion.span 
               key={`text-${tempScore}`}
               initial={{ scale: 1.2, color: '#fcd34d' }}
               animate={{ scale: 1, color: '#ffffff' }}
               transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-              className="text-6xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+              className="text-4xl md:text-6xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
             >
               {tempScore}
             </motion.span>
           </motion.div>
-          <div className="mt-3 text-yellow-400/90 font-bold text-sm tracking-[0.2em] uppercase">Điểm Tích Lũy</div>
+          <div className="mt-3 text-yellow-400/90 font-bold text-xs md:text-sm tracking-[0.2em] uppercase text-center">Điểm Tích Lũy</div>
         </div>
 
         {/* Team 2 */}
-        <div className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === teams[1].id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 min-w-[200px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative`}>
-          {gameState.controllingTeamId === teams[1].id && (
-            <div className="absolute -top-4 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-bounce">
-              Đang kiểm soát
-            </div>
-          )}
-          {gameState.isStealing && gameState.stealingTeamId === teams[1].id && (
-            <div className="absolute -top-4 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-pulse">
-              Đang cướp điểm
-            </div>
-          )}
-          <h3 className="text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide">{teams[1].name}</h3>
+        <div className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === teams[1].id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative mt-6`}>
+          <div className="absolute -top-5 w-full flex justify-center">
+            {gameState.controllingTeamId === teams[1].id && (
+              <div className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-bounce whitespace-nowrap">
+                Đang kiểm soát
+              </div>
+            )}
+            {gameState.isStealing && gameState.stealingTeamId === teams[1].id && (
+              <div className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-pulse whitespace-nowrap">
+                Đang cướp điểm
+              </div>
+            )}
+          </div>
+          <h3 className="text-xl md:text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide w-full truncate px-2">{teams[1].name}</h3>
           <motion.div 
             key={teams[1].score}
             initial={{ scale: 1.5, color: '#fcd34d' }}
             animate={{ scale: 1, color: '#facc15' }}
             transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-            className="text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+            className="text-4xl md:text-5xl font-black text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
           >
             {teams[1].score}
           </motion.div>
@@ -445,17 +451,17 @@ export default function GameBoard() {
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, type: 'spring', bounce: 0.4 }}
-        className="z-10 w-full max-w-4xl bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 mb-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+        className="z-10 w-full max-w-4xl bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-6 md:p-8 mb-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
       >
         <motion.h3 
           initial={{ scale: 0.9 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.8, type: 'spring', bounce: 0.5, delay: 0.2 }}
-          className="text-2xl md:text-4xl font-bold text-white leading-relaxed drop-shadow-md"
+          className="text-xl md:text-3xl lg:text-4xl font-bold text-white leading-relaxed drop-shadow-md"
         >
           {currentQuestion.text}
         </motion.h3>
-        <div className="mt-4 text-pink-300 font-medium tracking-wider uppercase text-sm">
+        <div className="mt-4 text-pink-300 font-medium tracking-wider uppercase text-xs md:text-sm">
           {currentQuestion.isSuddenDeath ? (
             <span className="text-rose-400 font-bold animate-pulse">✨ Câu hỏi phụ - Sudden Death ✨</span>
           ) : (
@@ -465,7 +471,7 @@ export default function GameBoard() {
       </motion.div>
 
       {/* Answers Grid */}
-      <div className="z-10 w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4 px-4 mb-12">
+      <div className="z-10 w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 px-4 mb-24">
         {displayAnswers.map((answer, index) => {
           const theme = getAnswerTheme(index);
           

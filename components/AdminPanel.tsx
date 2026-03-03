@@ -3,8 +3,9 @@
 import React, { useState, useRef } from 'react';
 import { useGame } from './GameProvider';
 import { Question, Answer, Team } from '@/lib/types';
-import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload } from 'lucide-react';
+import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload, GripVertical } from 'lucide-react';
 import Papa from 'papaparse';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 export default function AdminPanel() {
   const {
@@ -654,7 +655,8 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
     });
 
     const csvStr = Papa.unparse(csvData);
-    const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvStr);
+    const bom = '\uFEFF';
+    const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(bom + csvStr);
     const exportFileDefaultName = 'questions.csv';
 
     const linkElement = document.createElement('a');
@@ -756,11 +758,21 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
         alert('Lỗi khi đọc file.');
       }
     };
-    reader.readAsText(file);
+    reader.readAsText(file, 'UTF-8');
     
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const items = Array.from(gameState.questions);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    updateGameState({ questions: items });
   };
 
   return (
@@ -854,66 +866,89 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
         </div>
       </div>
 
-      <div className="space-y-4">
-        {gameState.questions.map((q, index) => (
-          <div key={q.id} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            {editingId === q.id ? (
-              <QuestionEditor 
-                question={q} 
-                onSave={(updates) => {
-                  updateQuestion(q.id, updates);
-                  setEditingId(null);
-                }}
-                onCancel={() => setEditingId(null)}
-                themeColor={themeColor}
-              />
-            ) : (
-              <div className="p-4 flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded">Câu {index + 1}</span>
-                    {q.isSuddenDeath ? (
-                      <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded">Sudden Death</span>
-                    ) : (
-                      <>
-                        <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">Vòng {q.round}</span>
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">x{q.multiplier} điểm</span>
-                      </>
-                    )}
-                    <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded">⏱ {q.timeLimit || 30}s</span>
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900">{q.text}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{q.answers.length} đáp án</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setPreviewQuestion(q)}
-                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded flex items-center justify-center"
-                    title="Xem trước"
-                  >
-                    <Eye className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => setEditingId(q.id)}
-                    className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm font-medium"
-                  >
-                    Sửa
-                  </button>
-                  <button
-                    onClick={() => {
-                      if(confirm('Xóa câu hỏi này?')) deleteQuestion(q.id);
-                    }}
-                    className="p-1.5 text-red-600 hover:bg-red-50 rounded"
-                    title="Xóa"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="questions">
+          {(provided) => (
+            <div className="space-y-4" {...provided.droppableProps} ref={provided.innerRef}>
+              {gameState.questions.map((q, index) => (
+                <Draggable key={q.id} draggableId={q.id} index={index}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${snapshot.isDragging ? 'ring-2 ring-blue-500 shadow-lg' : ''}`}
+                    >
+                      {editingId === q.id ? (
+                        <QuestionEditor 
+                          question={q} 
+                          onSave={(updates) => {
+                            updateQuestion(q.id, updates);
+                            setEditingId(null);
+                          }}
+                          onCancel={() => setEditingId(null)}
+                          themeColor={themeColor}
+                        />
+                      ) : (
+                        <div className="p-4 flex items-start justify-between">
+                          <div className="flex items-start gap-3">
+                            <div 
+                              {...provided.dragHandleProps}
+                              className="mt-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
+                            >
+                              <GripVertical className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded">Câu {index + 1}</span>
+                                {q.isSuddenDeath ? (
+                                  <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded">Sudden Death</span>
+                                ) : (
+                                  <>
+                                    <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">Vòng {q.round}</span>
+                                    <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">x{q.multiplier} điểm</span>
+                                  </>
+                                )}
+                                <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded">⏱ {q.timeLimit || 30}s</span>
+                              </div>
+                              <h3 className="text-lg font-medium text-gray-900">{q.text}</h3>
+                              <p className="text-sm text-gray-500 mt-1">{q.answers.length} đáp án</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setPreviewQuestion(q)}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded flex items-center justify-center"
+                              title="Xem trước"
+                            >
+                              <Eye className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => setEditingId(q.id)}
+                              className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm font-medium"
+                            >
+                              Sửa
+                            </button>
+                            <button
+                              onClick={() => {
+                                if(confirm('Xóa câu hỏi này?')) deleteQuestion(q.id);
+                              }}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                              title="Xóa"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </div>
   );
 }

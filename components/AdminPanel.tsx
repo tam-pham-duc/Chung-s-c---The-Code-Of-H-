@@ -317,7 +317,7 @@ function ControlTab({ themeColor }: { themeColor: string }) {
                 >
                   Chưa chọn
                 </button>
-                {teams.map(team => (
+                {teams.slice(0, gameState.numberOfTeams || 2).map(team => (
                   <button
                     key={team.id}
                     onClick={() => handleSetControllingTeam(team.id)}

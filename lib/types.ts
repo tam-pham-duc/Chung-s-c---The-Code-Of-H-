@@ -44,6 +44,7 @@ export interface GameState {
   programTheme: string;
   programNameEn: string;
   programThemeEn: string;
+  numberOfTeams: number;
   teams: Team[];
   questions: Question[];
   currentQuestionIndex: number;

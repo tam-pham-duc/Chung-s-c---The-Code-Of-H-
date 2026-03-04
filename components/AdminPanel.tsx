@@ -200,12 +200,9 @@ function ControlTab({ themeColor }: { themeColor: string }) {
     updateGameState({ controllingTeamId: teamId, strikes: 0, isStealing: false, stealingTeamId: null });
   };
 
-  const handleStartSteal = () => {
+  const handleStartSteal = (teamId: string) => {
     if (!controllingTeamId) return;
-    const stealingTeam = teams.find(t => t.id !== controllingTeamId);
-    if (stealingTeam) {
-      updateGameState({ isStealing: true, stealingTeamId: stealingTeam.id });
-    }
+    updateGameState({ isStealing: true, stealingTeamId: teamId });
   };
 
   const handleStealResult = (success: boolean) => {
@@ -333,17 +330,22 @@ function ControlTab({ themeColor }: { themeColor: string }) {
             </div>
             
             {controllingTeamId && strikes >= 3 && (
-              <div className="mt-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg flex items-center justify-between">
+              <div className="mt-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg flex flex-col md:flex-row items-center justify-between gap-4">
                 <div>
                   <h4 className="font-bold text-yellow-800">Đã sai 3 lần!</h4>
-                  <p className="text-sm text-yellow-700">Đội đối phương có quyền hội ý và cướp điểm.</p>
+                  <p className="text-sm text-yellow-700">Chọn đội cướp điểm:</p>
                 </div>
-                <button
-                  onClick={handleStartSteal}
-                  className="px-6 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded shadow-sm"
-                >
-                  Bắt đầu Cướp điểm
-                </button>
+                <div className="flex gap-2">
+                  {teams.slice(0, gameState.numberOfTeams || 2).filter(t => t.id !== controllingTeamId).map(team => (
+                    <button
+                      key={team.id}
+                      onClick={() => handleStartSteal(team.id)}
+                      className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded shadow-sm"
+                    >
+                      {team.name} Cướp
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -471,20 +473,16 @@ function ControlTab({ themeColor }: { themeColor: string }) {
           <h3 className="text-lg font-bold text-green-800 mb-2">Cộng điểm tích lũy</h3>
           <div className="text-4xl font-black text-green-600 mb-6">{tempScore} điểm</div>
           <div className="flex gap-4 w-full">
-            <button 
-              onClick={() => awardPoints(teams[0].id)}
-              disabled={tempScore === 0}
-              className={`flex-1 py-3 ${themeColor} text-white rounded-lg font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-              Cộng cho {teams[0].name}
-            </button>
-            <button 
-              onClick={() => awardPoints(teams[1].id)}
-              disabled={tempScore === 0}
-              className={`flex-1 py-3 ${themeColor} text-white rounded-lg font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-              Cộng cho {teams[1].name}
-            </button>
+            {teams.slice(0, gameState.numberOfTeams || 2).map(team => (
+              <button 
+                key={team.id}
+                onClick={() => awardPoints(team.id)}
+                disabled={tempScore === 0}
+                className={`flex-1 py-3 ${themeColor} text-white rounded-lg font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                Cộng cho {team.name}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -551,11 +549,58 @@ function ProgramTab({ themeColor }: { themeColor: string }) {
 }
 
 function TeamsTab({ themeColor }: { themeColor: string }) {
-  const { gameState, updateTeam } = useGame();
+  const { gameState, updateTeam, updateGameState } = useGame();
+
+  const handleNumberOfTeamsChange = (num: number) => {
+    let newTeams = [...gameState.teams];
+    if (num === 3 && newTeams.length === 2) {
+      newTeams.push({
+        id: 'team3',
+        name: 'Đội 3',
+        members: ['Đội trưởng 3', 'Thành viên 2', 'Thành viên 3', 'Thành viên 4'],
+        score: 0
+      });
+    } else if (num === 2 && newTeams.length === 3) {
+      newTeams = newTeams.slice(0, 2);
+    }
+    updateGameState({ numberOfTeams: num, teams: newTeams });
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {gameState.teams.map((team, index) => (
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Cài đặt chung</h2>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Số lượng đội chơi</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="radio" 
+                name="numberOfTeams" 
+                value="2" 
+                checked={gameState.numberOfTeams === 2 || !gameState.numberOfTeams} 
+                onChange={() => handleNumberOfTeamsChange(2)}
+                className="w-4 h-4 text-blue-600"
+              />
+              <span>2 Đội</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="radio" 
+                name="numberOfTeams" 
+                value="3" 
+                checked={gameState.numberOfTeams === 3} 
+                onChange={() => handleNumberOfTeamsChange(3)}
+                className="w-4 h-4 text-blue-600"
+              />
+              <span>3 Đội</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className={`grid grid-cols-1 ${gameState.numberOfTeams === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6`}>
+        {gameState.teams.slice(0, gameState.numberOfTeams || 2).map((team, index) => (
         <div key={team.id} className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
           <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Đội {index + 1}</h2>
           
@@ -604,6 +649,7 @@ function TeamsTab({ themeColor }: { themeColor: string }) {
           </div>
         </div>
       ))}
+      </div>
     </div>
   );
 }

@@ -9,7 +9,9 @@ export default function Leaderboard() {
   const { gameState } = useGame();
   
   // Sort teams by score descending
-  const sortedTeams = [...gameState.teams].sort((a, b) => b.score - a.score);
+  const sortedTeams = [...gameState.teams]
+    .slice(0, gameState.numberOfTeams || 2)
+    .sort((a, b) => b.score - a.score);
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-indigo-900 to-purple-950 overflow-hidden font-sans p-8">

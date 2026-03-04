@@ -533,35 +533,9 @@ export default function GameBoard() {
       </div>
 
       {/* Scoreboard */}
-      <div className="z-10 grid grid-cols-3 gap-4 md:gap-8 w-full max-w-5xl px-4 mb-8 items-start">
-        {/* Team 1 */}
-        <div className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === teams[0].id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative mt-6`}>
-          <div className="absolute -top-5 w-full flex justify-center">
-            {gameState.controllingTeamId === teams[0].id && (
-              <div className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-bounce whitespace-nowrap">
-                Đang kiểm soát
-              </div>
-            )}
-            {gameState.isStealing && gameState.stealingTeamId === teams[0].id && (
-              <div className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-pulse whitespace-nowrap">
-                Đang cướp điểm
-              </div>
-            )}
-          </div>
-          <h3 className="text-xl md:text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide w-full truncate px-2">{teams[0].name}</h3>
-          <motion.div 
-            key={teams[0].score}
-            initial={{ scale: 2, y: -30, color: '#ffffff', textShadow: '0 0 20px #ffffff, 0 0 40px #facc15' }}
-            animate={{ scale: 1, y: 0, color: '#facc15', textShadow: '0 4px 8px rgba(0,0,0,0.8)' }}
-            transition={{ type: 'spring', stiffness: 400, damping: 10, duration: 0.8 }}
-            className="text-4xl md:text-5xl font-black text-yellow-400"
-          >
-            {teams[0].score}
-          </motion.div>
-        </div>
-
+      <div className="z-10 flex flex-col items-center w-full max-w-6xl px-4 mb-8">
         {/* Current Points */}
-        <div className="flex flex-col items-center justify-start relative pt-2">
+        <div className="flex flex-col items-center justify-start relative pt-2 mb-6">
           <div className="h-8 mb-2 flex items-end justify-center w-full">
             {gameState.isStealing && (
               <div className="bg-orange-600/80 backdrop-blur text-white px-4 py-1 rounded-full font-bold uppercase tracking-widest border border-orange-400 shadow-[0_0_30px_rgba(234,88,12,0.6)] animate-pulse whitespace-nowrap text-xs">
@@ -589,30 +563,34 @@ export default function GameBoard() {
           <div className="mt-3 text-yellow-400/90 font-bold text-xs tracking-[0.2em] uppercase text-center">Điểm Tích Lũy</div>
         </div>
 
-        {/* Team 2 */}
-        <div className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === teams[1].id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative mt-6`}>
-          <div className="absolute -top-5 w-full flex justify-center">
-            {gameState.controllingTeamId === teams[1].id && (
-              <div className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-bounce whitespace-nowrap">
-                Đang kiểm soát
+        {/* Teams */}
+        <div className={`grid w-full gap-4 md:gap-8 ${gameState.numberOfTeams === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          {teams.slice(0, gameState.numberOfTeams || 2).map((team) => (
+            <div key={team.id} className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === team.id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative mt-6`}>
+              <div className="absolute -top-5 w-full flex justify-center">
+                {gameState.controllingTeamId === team.id && (
+                  <div className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-bounce whitespace-nowrap">
+                    Đang kiểm soát
+                  </div>
+                )}
+                {gameState.isStealing && gameState.stealingTeamId === team.id && (
+                  <div className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-pulse whitespace-nowrap">
+                    Đang cướp điểm
+                  </div>
+                )}
               </div>
-            )}
-            {gameState.isStealing && gameState.stealingTeamId === teams[1].id && (
-              <div className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-pulse whitespace-nowrap">
-                Đang cướp điểm
-              </div>
-            )}
-          </div>
-          <h3 className="text-xl md:text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide w-full truncate px-2">{teams[1].name}</h3>
-          <motion.div 
-            key={teams[1].score}
-            initial={{ scale: 2, y: -30, color: '#ffffff', textShadow: '0 0 20px #ffffff, 0 0 40px #facc15' }}
-            animate={{ scale: 1, y: 0, color: '#facc15', textShadow: '0 4px 8px rgba(0,0,0,0.8)' }}
-            transition={{ type: 'spring', stiffness: 400, damping: 10, duration: 0.8 }}
-            className="text-4xl md:text-5xl font-black text-yellow-400"
-          >
-            {teams[1].score}
-          </motion.div>
+              <h3 className="text-xl md:text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide w-full truncate px-2">{team.name}</h3>
+              <motion.div 
+                key={team.score}
+                initial={{ scale: 2, y: -30, color: '#ffffff', textShadow: '0 0 20px #ffffff, 0 0 40px #facc15' }}
+                animate={{ scale: 1, y: 0, color: '#facc15', textShadow: '0 4px 8px rgba(0,0,0,0.8)' }}
+                transition={{ type: 'spring', stiffness: 400, damping: 10, duration: 0.8 }}
+                className="text-4xl md:text-5xl font-black text-yellow-400"
+              >
+                {team.score}
+              </motion.div>
+            </div>
+          ))}
         </div>
       </div>
 

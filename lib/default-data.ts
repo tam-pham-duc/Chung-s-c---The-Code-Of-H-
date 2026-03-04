@@ -5,6 +5,7 @@ export const defaultGameState: GameState = {
   programTheme: 'Giải Mã Phái Đẹp',
   programNameEn: 'FAMILY FEUD',
   programThemeEn: 'The Code Of Her',
+  numberOfTeams: 2,
   teams: [
     { id: 'team1', name: 'Đội 1', members: ['Đội trưởng 1', 'Thành viên 2', 'Thành viên 3', 'Thành viên 4'], score: 0 },
     { id: 'team2', name: 'Đội 2', members: ['Đội trưởng 2', 'Thành viên 2', 'Thành viên 3', 'Thành viên 4'], score: 0 },

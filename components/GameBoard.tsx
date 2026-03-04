@@ -564,7 +564,14 @@ export default function GameBoard() {
         </div>
 
         {/* Teams */}
-        <div className={`grid w-full gap-4 md:gap-8 ${gameState.numberOfTeams === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
+        <div className={`grid w-full gap-4 md:gap-8 grid-cols-1 ${
+          {
+            2: 'sm:grid-cols-2',
+            3: 'sm:grid-cols-3',
+            4: 'sm:grid-cols-4',
+            5: 'sm:grid-cols-5',
+          }[gameState.numberOfTeams || 2] || 'sm:grid-cols-2'
+        }`}>
           {teams.slice(0, gameState.numberOfTeams || 2).map((team) => (
             <div key={team.id} className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === team.id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative mt-6`}>
               <div className="absolute -top-5 w-full flex justify-center">

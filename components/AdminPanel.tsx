@@ -551,57 +551,71 @@ function ProgramTab({ themeColor }: { themeColor: string }) {
 function TeamsTab({ themeColor }: { themeColor: string }) {
   const { gameState, updateTeam, updateGameState } = useGame();
 
-  const handleNumberOfTeamsChange = (num: number) => {
-    let newTeams = [...gameState.teams];
-    if (num === 3 && newTeams.length === 2) {
-      newTeams.push({
-        id: 'team3',
-        name: 'Đội 3',
-        members: ['Đội trưởng 3', 'Thành viên 2', 'Thành viên 3', 'Thành viên 4'],
-        score: 0
-      });
-    } else if (num === 2 && newTeams.length === 3) {
-      newTeams = newTeams.slice(0, 2);
-    }
-    updateGameState({ numberOfTeams: num, teams: newTeams });
+  const handleAddTeam = () => {
+    const currentCount = gameState.numberOfTeams || gameState.teams.length;
+    if (currentCount >= 5) return;
+    
+    const newTeams = [...gameState.teams];
+    const newTeamNum = newTeams.length + 1;
+    newTeams.push({
+      id: `team${Date.now()}`,
+      name: `Đội ${newTeamNum}`,
+      members: [`Đội trưởng ${newTeamNum}`, 'Thành viên 2', 'Thành viên 3', 'Thành viên 4'],
+      score: 0
+    });
+    
+    updateGameState({ numberOfTeams: newTeams.length, teams: newTeams });
+  };
+
+  const handleRemoveTeam = (teamId: string) => {
+    const currentCount = gameState.numberOfTeams || gameState.teams.length;
+    if (currentCount <= 2) return;
+    
+    const newTeams = gameState.teams.filter(t => t.id !== teamId);
+    updateGameState({ numberOfTeams: newTeams.length, teams: newTeams });
   };
 
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Cài đặt chung</h2>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Số lượng đội chơi</label>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="numberOfTeams" 
-                value="2" 
-                checked={gameState.numberOfTeams === 2 || !gameState.numberOfTeams} 
-                onChange={() => handleNumberOfTeamsChange(2)}
-                className="w-4 h-4 text-blue-600"
-              />
-              <span>2 Đội</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="numberOfTeams" 
-                value="3" 
-                checked={gameState.numberOfTeams === 3} 
-                onChange={() => handleNumberOfTeamsChange(3)}
-                className="w-4 h-4 text-blue-600"
-              />
-              <span>3 Đội</span>
-            </label>
+        <div className="flex justify-between items-center mb-4 border-b pb-2">
+          <h2 className="text-xl font-bold text-gray-800">Cài đặt chung</h2>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-gray-700">Số lượng đội chơi: {gameState.numberOfTeams || gameState.teams.length}/5</span>
+            <button 
+              onClick={handleAddTeam}
+              disabled={(gameState.numberOfTeams || gameState.teams.length) >= 5}
+              className={`px-4 py-2 rounded-lg font-medium text-white transition-colors ${
+                (gameState.numberOfTeams || gameState.teams.length) >= 5 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              + Thêm đội chơi
+            </button>
           </div>
         </div>
       </div>
 
-      <div className={`grid grid-cols-1 ${gameState.numberOfTeams === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6`}>
+      <div className={`grid grid-cols-1 ${
+        {
+          2: 'md:grid-cols-2',
+          3: 'md:grid-cols-3',
+          4: 'md:grid-cols-2 lg:grid-cols-4',
+          5: 'md:grid-cols-3 lg:grid-cols-5',
+        }[gameState.numberOfTeams || 2] || 'md:grid-cols-2'
+      } gap-6`}>
         {gameState.teams.slice(0, gameState.numberOfTeams || 2).map((team, index) => (
-        <div key={team.id} className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <div key={team.id} className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm relative">
+          {(gameState.numberOfTeams || gameState.teams.length) > 2 && (
+            <button
+              onClick={() => handleRemoveTeam(team.id)}
+              className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+              title="Xóa đội này"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          )}
           <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Đội {index + 1}</h2>
           
           <div className="space-y-4">

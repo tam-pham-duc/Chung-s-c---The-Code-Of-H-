@@ -837,48 +837,72 @@ function QuestionsTab({ themeColor }: { themeColor: string }) {
     <div className="space-y-6">
       {/* Preview Modal */}
       {previewQuestion && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-950 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl relative border border-white/20">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 md:p-8">
+          <div className="bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-950 rounded-3xl w-full max-w-6xl h-[90vh] overflow-y-auto shadow-[0_0_50px_rgba(0,0,0,0.8)] relative border border-white/20 flex flex-col items-center pt-16 pb-12 px-6 md:px-12">
             <button 
               onClick={() => setPreviewQuestion(null)}
-              className="absolute top-4 right-4 z-10 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors"
+              className="absolute top-6 right-6 z-10 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-md border border-white/20"
             >
-              <X className="w-6 h-6" />
+              <X className="w-8 h-8" />
             </button>
             
-            <div className="p-8">
-              <div className="text-center mb-6">
-                <span className="px-3 py-1 bg-white/20 text-white rounded-full text-xs font-bold uppercase tracking-wider">
-                  Xem trước giao diện
+            <div className="text-center mb-8">
+              <span className="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-bold uppercase tracking-widest shadow-lg border border-white/30">
+                Xem trước giao diện trò chơi
+              </span>
+            </div>
+            
+            <div className="w-full max-w-5xl bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-indigo-900/80 backdrop-blur-xl border border-white/30 rounded-3xl p-8 md:p-12 mb-12 text-center shadow-[0_15px_50px_rgba(0,0,0,0.5)]">
+              <h3 className="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-tight drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] mb-4">
+                {previewQuestion.text}
+              </h3>
+              {previewQuestion.textEn && (
+                <h4 className="text-xl md:text-3xl font-medium text-pink-200 leading-relaxed drop-shadow-md italic mb-6">
+                  {previewQuestion.textEn}
+                </h4>
+              )}
+              <div className="mt-6 text-pink-300 font-bold tracking-widest uppercase text-sm md:text-lg flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 bg-black/20 py-3 px-6 rounded-full inline-flex border border-white/10">
+                {previewQuestion.isSuddenDeath ? (
+                  <span className="text-rose-400 animate-pulse">✨ Câu hỏi phụ - Sudden Death ✨</span>
+                ) : (
+                  <span>Vòng {previewQuestion.round} • Hệ số: x{previewQuestion.multiplier}</span>
+                )}
+                <span className="text-yellow-400 flex items-center gap-2">
+                  <span className="text-2xl">⏱</span> {previewQuestion.timeLimit || 30}s
                 </span>
               </div>
-              
-              <div className="w-full bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 mb-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-                <h3 className="text-2xl md:text-4xl font-bold text-white leading-relaxed drop-shadow-md">
-                  {previewQuestion.text}
-                </h3>
-                <div className="mt-4 text-pink-300 font-medium tracking-wider uppercase text-sm flex items-center justify-center gap-4">
-                  {previewQuestion.isSuddenDeath ? (
-                    <span className="text-rose-400 font-bold animate-pulse">✨ Câu hỏi phụ - Sudden Death ✨</span>
-                  ) : (
-                    <span>Vòng {previewQuestion.round} • Hệ số: x{previewQuestion.multiplier}</span>
-                  )}
-                  <span className="text-yellow-300">⏱ {previewQuestion.timeLimit || 30}s</span>
-                </div>
-              </div>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {previewQuestion.answers.map((answer, idx) => (
-                  <div key={answer.id} className="h-16 bg-gradient-to-r from-indigo-800/80 to-purple-800/80 backdrop-blur-sm border border-white/20 rounded-xl flex items-center shadow-lg">
-                    <div className="w-12 h-12 ml-2 rounded-full bg-white/10 border border-white/30 flex items-center justify-center text-xl font-bold text-white/90 shadow-inner">
-                      {idx + 1}
-                    </div>
-                    <div className="flex-grow px-4 text-white/50 italic text-sm">
-                      (Đã ẩn: {answer.text} - {answer.points} điểm)
+            <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 px-2">
+              {previewQuestion.answers.map((answer, idx) => (
+                <div key={answer.id} className="relative h-24 md:h-28 perspective-1000 group">
+                  <div className="w-full h-full relative preserve-3d transition-transform duration-500 group-hover:scale-[1.02]">
+                    <div className="absolute w-full h-full bg-gradient-to-r from-indigo-800/90 to-purple-800/90 backdrop-blur-md border-2 border-white/30 rounded-2xl flex items-center shadow-[0_10px_30px_rgba(0,0,0,0.4)] overflow-hidden">
+                      <div className="w-16 h-16 md:w-20 md:h-20 ml-4 rounded-full bg-white/10 border-2 border-white/40 flex items-center justify-center text-2xl md:text-3xl font-black text-white/90 shadow-inner">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-grow px-6 flex flex-col justify-center">
+                        <div className="text-white/60 italic text-sm md:text-base font-medium mb-1">
+                          (Nội dung ẩn)
+                        </div>
+                        <div className="text-white font-bold text-lg md:text-xl truncate">
+                          {answer.text}
+                        </div>
+                        {answer.textEn && (
+                          <div className="text-pink-200/80 italic text-sm truncate">
+                            {answer.textEn}
+                          </div>
+                        )}
+                      </div>
+                      <div className="bg-black/30 h-full px-6 flex items-center justify-center border-l border-white/20">
+                        <span className="text-yellow-400 font-black text-2xl md:text-3xl drop-shadow-md">
+                          {answer.points}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

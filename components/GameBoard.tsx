@@ -625,7 +625,7 @@ export default function GameBoard() {
           const theme = getAnswerTheme(index);
           
           return (
-            <div key={answer.id} className="relative h-20 perspective-1000">
+            <div key={answer.id} className="relative h-20 perspective-1000 group hover:-translate-y-1 transition-transform duration-300">
               <motion.div
                 className="w-full h-full relative preserve-3d cursor-default"
                 initial={false}
@@ -636,7 +636,7 @@ export default function GameBoard() {
                 transition={{ duration: 0.8, type: 'spring', bounce: 0.5 }}
               >
                 {/* Front (Hidden) */}
-                <div className="absolute w-full h-full backface-hidden bg-gradient-to-r from-indigo-800/80 to-purple-800/80 backdrop-blur-sm border border-white/20 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="absolute w-full h-full backface-hidden bg-gradient-to-r from-indigo-800/80 to-purple-800/80 backdrop-blur-sm border border-white/20 group-hover:border-white/50 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] rounded-xl flex items-center justify-center shadow-lg transition-all duration-300">
                   <div className="w-12 h-12 rounded-full bg-white/10 border border-white/30 flex items-center justify-center text-2xl font-bold text-white/90 shadow-inner">
                     {index + 1}
                   </div>
@@ -644,11 +644,16 @@ export default function GameBoard() {
 
                 {/* Back (Revealed) */}
                 <div 
-                  className={`absolute w-full h-full backface-hidden bg-white rounded-xl flex items-center overflow-hidden ${theme.shadow} border-2 ${theme.border}`} 
+                  className={`absolute w-full h-full backface-hidden bg-white rounded-xl flex items-center overflow-hidden ${theme.shadow} border-2 ${theme.border} group-hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] group-hover:border-white/80 transition-all duration-300`} 
                   style={{ transform: 'rotateX(180deg)' }}
                 >
                   {answer.text ? (
-                    <>
+                    <motion.div 
+                      className="w-full h-full flex items-center"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: answer.revealed ? 1 : 0, scale: answer.revealed ? 1 : 0.8 }}
+                      transition={{ duration: 0.4, delay: 0.15 }}
+                    >
                       <div className={`flex items-center justify-center w-16 h-full bg-gradient-to-br ${theme.gradient} border-r border-white/50`}>
                         {theme.icon}
                       </div>
@@ -665,7 +670,7 @@ export default function GameBoard() {
                       <div className={`w-24 h-full bg-gradient-to-br ${theme.gradient} flex items-center justify-center text-3xl font-black text-white drop-shadow-md border-l border-white/50`}>
                         {answer.points}
                       </div>
-                    </>
+                    </motion.div>
                   ) : (
                     <div className="flex-grow flex items-center justify-center text-gray-300 text-2xl font-bold">
                       ---

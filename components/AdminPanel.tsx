@@ -3,9 +3,10 @@
 import React, { useState, useRef } from 'react';
 import { useGame } from './GameProvider';
 import { Question, Answer, Team } from '@/lib/types';
-import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload, GripVertical, Music } from 'lucide-react';
+import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload, GripVertical, Music, MonitorPlay } from 'lucide-react';
 import Papa from 'papaparse';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import MCPanel from './MCPanel';
 
 export default function AdminPanel() {
   const {
@@ -25,6 +26,7 @@ export default function AdminPanel() {
 
   const [activeTab, setActiveTab] = useState<'control' | 'program' | 'teams' | 'questions' | 'sounds' | 'settings'>('control');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [viewMode, setViewMode] = useState<'admin' | 'mc'>('admin');
 
   // Admin Settings State
   const [adminTheme, setAdminTheme] = useState('blue');
@@ -137,53 +139,72 @@ export default function AdminPanel() {
               Bảng Điều Khiển - Chung Sức
             </h1>
           </div>
-          <button
-            onClick={() => setShowResetConfirm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors"
-          >
-            <RotateCcw className="w-4 h-4" />
-            Làm mới Game
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setViewMode(viewMode === 'admin' ? 'mc' : 'admin')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                viewMode === 'mc' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-700 hover:bg-slate-600'
+              }`}
+            >
+              {viewMode === 'mc' ? <Settings className="w-4 h-4" /> : <MonitorPlay className="w-4 h-4" />}
+              {viewMode === 'mc' ? 'Chuyển sang Admin' : 'Chuyển sang MC'}
+            </button>
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Làm mới Game
+            </button>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 bg-gray-50 overflow-x-auto">
-          {tabOrder.map(tabId => {
-            const tab = tabConfig[tabId as keyof typeof tabConfig];
-            if (!tab) return null;
-            const isActive = activeTab === tabId;
-            return (
-              <button
-                key={tabId}
-                className={`flex-1 py-4 px-6 text-sm font-medium flex items-center justify-center gap-2 whitespace-nowrap ${
-                  isActive 
-                    ? `bg-white border-b-2 ${getThemeClass('border')} ${getThemeClass('text')}` 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-                onClick={() => setActiveTab(tabId as any)}
-              >
-                {tab.icon} {tab.label}
-              </button>
-            );
-          })}
-        </div>
+        {viewMode === 'admin' ? (
+          <>
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 bg-gray-50 overflow-x-auto">
+              {tabOrder.map(tabId => {
+                const tab = tabConfig[tabId as keyof typeof tabConfig];
+                if (!tab) return null;
+                const isActive = activeTab === tabId;
+                return (
+                  <button
+                    key={tabId}
+                    className={`flex-1 py-4 px-6 text-sm font-medium flex items-center justify-center gap-2 whitespace-nowrap ${
+                      isActive 
+                        ? `bg-white border-b-2 ${getThemeClass('border')} ${getThemeClass('text')}` 
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    onClick={() => setActiveTab(tabId as any)}
+                  >
+                    {tab.icon} {tab.label}
+                  </button>
+                );
+              })}
+            </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === 'control' && <ControlTab themeColor={getThemeClass('bg')} />}
-          {activeTab === 'program' && <ProgramTab themeColor={getThemeClass('bg')} />}
-          {activeTab === 'teams' && <TeamsTab themeColor={getThemeClass('bg')} />}
-          {activeTab === 'questions' && <QuestionsTab themeColor={getThemeClass('bg')} />}
-          {activeTab === 'sounds' && <SoundsTab themeColor={getThemeClass('bg')} />}
-          {activeTab === 'settings' && (
-            <SettingsTab 
-              adminTheme={adminTheme} setAdminTheme={setAdminTheme}
-              adminFont={adminFont} setAdminFont={setAdminFont}
-              tabOrder={tabOrder} setTabOrder={setTabOrder}
-              themeColor={getThemeClass('bg')}
-            />
-          )}
-        </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {activeTab === 'control' && <ControlTab themeColor={getThemeClass('bg')} />}
+              {activeTab === 'program' && <ProgramTab themeColor={getThemeClass('bg')} />}
+              {activeTab === 'teams' && <TeamsTab themeColor={getThemeClass('bg')} />}
+              {activeTab === 'questions' && <QuestionsTab themeColor={getThemeClass('bg')} />}
+              {activeTab === 'sounds' && <SoundsTab themeColor={getThemeClass('bg')} />}
+              {activeTab === 'settings' && (
+                <SettingsTab 
+                  adminTheme={adminTheme} setAdminTheme={setAdminTheme}
+                  adminFont={adminFont} setAdminFont={setAdminFont}
+                  tabOrder={tabOrder} setTabOrder={setTabOrder}
+                  themeColor={getThemeClass('bg')}
+                />
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 overflow-y-auto bg-slate-900">
+            <MCPanel />
+          </div>
+        )}
       </div>
     </div>
   );

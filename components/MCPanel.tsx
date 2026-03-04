@@ -66,7 +66,7 @@ const getAnswerTheme = (index: number) => {
 };
 
 export default function MCPanel() {
-  const { gameState } = useGame();
+  const { gameState, revealAnswer, nextQuestion } = useGame();
   const { questions, currentQuestionIndex, teams, tempScore, strikes, showStrike } = gameState;
   const currentQuestion = questions[currentQuestionIndex];
   const [currentTime, setCurrentTime] = useState(() => Date.now());
@@ -83,11 +83,11 @@ export default function MCPanel() {
     : (gameState.timerDuration || 30);
 
   if (!currentQuestion) {
-    return <div className="flex items-center justify-center h-screen bg-slate-900 text-white text-2xl">Chưa có câu hỏi nào</div>;
+    return <div className="flex items-center justify-center h-full min-h-[50vh] bg-slate-900 text-white text-2xl">Chưa có câu hỏi nào</div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8 font-sans overflow-y-auto">
+    <div className="min-h-full bg-slate-900 text-slate-100 p-4 md:p-8 font-sans overflow-y-auto">
       <div className="max-w-6xl mx-auto space-y-6">
         
         {/* Header Info */}
@@ -118,6 +118,13 @@ export default function MCPanel() {
                 {displayTime}s
               </div>
             </div>
+            <button
+              onClick={nextQuestion}
+              disabled={currentQuestionIndex >= questions.length - 1}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-xl font-bold transition-colors shadow-lg"
+            >
+              Câu Tiếp Theo
+            </button>
           </div>
         </div>
 
@@ -150,7 +157,7 @@ export default function MCPanel() {
             return (
               <div 
                 key={answer.id} 
-                className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 flex flex-col ${
                   answer.revealed 
                     ? `bg-white ${theme.border} shadow-[0_0_15px_rgba(255,255,255,0.1)]` 
                     : 'bg-slate-800 border-slate-600 opacity-80 hover:opacity-100'
@@ -198,12 +205,22 @@ export default function MCPanel() {
                   </div>
 
                   {/* Points */}
-                  <div className={`absolute right-0 top-0 bottom-0 w-20 flex items-center justify-center border-l ${
+                  <div className={`absolute right-0 top-0 bottom-0 w-20 flex flex-col items-center justify-center border-l ${
                     answer.revealed ? `bg-gradient-to-br ${theme.gradient} border-white/50 text-white` : 'bg-slate-700/50 border-slate-600 text-slate-400'
                   }`}>
                     <span className="text-2xl font-black">{answer.points}</span>
                   </div>
                 </div>
+                
+                {/* Reveal Button */}
+                {!answer.revealed && (
+                  <button
+                    onClick={() => revealAnswer(currentQuestion.id, answer.id)}
+                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm uppercase tracking-wider transition-colors border-t border-indigo-700"
+                  >
+                    Lật đáp án
+                  </button>
+                )}
               </div>
             );
           })}

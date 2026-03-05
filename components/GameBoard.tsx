@@ -466,7 +466,7 @@ export default function GameBoard() {
   const isSuddenDeathActive = currentQuestion.isSuddenDeath && introPlayedFor === currentQuestion.id;
 
   return (
-    <div className={`relative flex flex-col items-center justify-start min-h-screen overflow-y-auto overflow-x-hidden font-sans py-8 px-4 transition-colors duration-1000 ${isSuddenDeathActive ? 'bg-gradient-to-br from-rose-950 via-red-900 to-orange-950' : 'bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-950'}`}>
+    <div className={`relative flex flex-col items-center justify-start h-screen overflow-hidden font-sans py-4 px-4 transition-colors duration-1000 ${isSuddenDeathActive ? 'bg-gradient-to-br from-rose-950 via-red-900 to-orange-950' : 'bg-gradient-to-br from-indigo-950 via-purple-900 to-fuchsia-950'}`}>
       {/* Background decorations */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 pointer-events-none mix-blend-overlay fixed"></div>
       <div className={`absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] pointer-events-none fixed ${isSuddenDeathActive ? 'from-red-500/20' : 'from-pink-500/20'} via-transparent to-transparent`}></div>
@@ -661,20 +661,30 @@ export default function GameBoard() {
                       animate={{ opacity: answer.revealed ? 1 : 0, scale: answer.revealed ? 1 : 0.8 }}
                       transition={{ duration: 0.4, delay: 0.15 }}
                     >
-                      <div className={`flex items-center justify-center w-16 h-full bg-gradient-to-br ${theme.gradient} border-r border-white/50`}>
+                      <div className={`flex items-center justify-center w-16 h-full bg-gradient-to-br ${theme.gradient} border-r border-white/50 shrink-0`}>
                         {theme.icon}
                       </div>
-                      <div className={`flex-grow px-6 flex flex-col justify-center truncate`}>
-                        <div className={`text-xl md:text-2xl font-bold ${theme.text} uppercase truncate`}>
+                      <div className={`flex-grow px-4 md:px-6 py-1 flex flex-col justify-center min-w-0`}>
+                        <div 
+                          className={`font-bold ${theme.text} uppercase leading-tight`}
+                          style={{ 
+                            fontSize: answer.text.length > 30 ? '1rem' : answer.text.length > 20 ? '1.25rem' : '1.5rem'
+                          }}
+                        >
                           {answer.text}
                         </div>
                         {answer.textEn && (
-                          <div className={`text-sm md:text-base font-medium ${theme.text} opacity-80 italic truncate`}>
+                          <div 
+                            className={`font-medium ${theme.text} opacity-80 italic leading-tight mt-0.5`}
+                            style={{ 
+                              fontSize: answer.textEn.length > 40 ? '0.75rem' : '0.875rem'
+                            }}
+                          >
                             {answer.textEn}
                           </div>
                         )}
                       </div>
-                      <div className={`w-24 h-full bg-gradient-to-br ${theme.gradient} flex items-center justify-center text-3xl font-black text-white drop-shadow-md border-l border-white/50`}>
+                      <div className={`w-20 md:w-24 h-full bg-gradient-to-br ${theme.gradient} flex items-center justify-center text-2xl md:text-3xl font-black text-white drop-shadow-md border-l border-white/50 shrink-0`}>
                         {answer.points}
                       </div>
                     </motion.div>

@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useGame } from './GameProvider';
 import { Question, Answer, Team } from '@/lib/types';
-import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload, GripVertical, Music, MonitorPlay } from 'lucide-react';
+import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload, GripVertical, Music, Music2, MonitorPlay } from 'lucide-react';
 import Papa from 'papaparse';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import MCPanel from './MCPanel';
@@ -27,6 +27,19 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState<'control' | 'program' | 'teams' | 'questions' | 'sounds' | 'settings'>('control');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [viewMode, setViewMode] = useState<'admin' | 'mc'>('admin');
+  const [isAdminMusicPlaying, setIsAdminMusicPlaying] = useState(false);
+  const adminAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (adminAudioRef.current) {
+      adminAudioRef.current.volume = gameState.soundSettings?.bgmVolume ?? 0.5;
+      if (isAdminMusicPlaying) {
+        adminAudioRef.current.play().catch(e => console.error("Admin audio play failed:", e));
+      } else {
+        adminAudioRef.current.pause();
+      }
+    }
+  }, [isAdminMusicPlaying, gameState.soundSettings?.bgmVolume]);
 
   // Admin Settings State
   const [adminTheme, setAdminTheme] = useState('blue');
@@ -89,7 +102,7 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className={`min-h-screen bg-gray-100 p-6 ${adminFont}`}>
+    <div className={`h-screen bg-gray-100 p-4 md:p-6 ${adminFont} overflow-hidden flex flex-col`}>
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -116,10 +129,10 @@ export default function AdminPanel() {
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden flex flex-col h-[90vh]">
+      <div className="max-w-6xl mx-auto w-full bg-white rounded-xl shadow-xl overflow-hidden flex flex-col flex-1 min-h-0">
         
         {/* Header */}
-        <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
+        <div className="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-4">
             <button
               onClick={() => {
@@ -140,6 +153,22 @@ export default function AdminPanel() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
+            <audio 
+              ref={adminAudioRef} 
+              src={gameState.soundSettings?.bgmUrl || "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"} 
+              loop 
+              preload="auto"
+            />
+            <button
+              onClick={() => setIsAdminMusicPlaying(!isAdminMusicPlaying)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isAdminMusicPlaying ? 'bg-pink-600 hover:bg-pink-700' : 'bg-slate-700 hover:bg-slate-600'
+              }`}
+              title={isAdminMusicPlaying ? "Tắt nhạc nền Admin" : "Bật nhạc nền Admin"}
+            >
+              {isAdminMusicPlaying ? <Music className="w-4 h-4 animate-pulse" /> : <Music2 className="w-4 h-4" />}
+              <span className="hidden sm:inline">Nhạc nền</span>
+            </button>
             <button
               onClick={() => setViewMode(viewMode === 'admin' ? 'mc' : 'admin')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${

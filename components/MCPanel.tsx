@@ -87,11 +87,11 @@ export default function MCPanel() {
   }
 
   return (
-    <div className="min-h-full bg-slate-900 text-slate-100 p-4 md:p-8 font-sans overflow-y-auto">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="h-full bg-slate-900 text-slate-100 p-4 md:p-6 font-sans overflow-hidden flex flex-col">
+      <div className="max-w-6xl mx-auto w-full flex flex-col h-full space-y-4">
         
         {/* Header Info */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-800 p-4 md:p-6 rounded-2xl border border-slate-700 shadow-lg shrink-0">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">Màn Hình MC</h1>
             <div className="text-slate-400 text-sm flex items-center gap-2">
@@ -189,16 +189,26 @@ export default function MCPanel() {
                   </div>
 
                   {/* Answer Content */}
-                  <div className="flex-grow p-4 flex flex-col justify-center pr-24">
-                    <div className={`text-xl font-bold uppercase ${
-                      answer.revealed ? theme.text : 'text-slate-300'
-                    }`}>
+                  <div className="flex-grow p-4 flex flex-col justify-center pr-24 min-w-0">
+                    <div 
+                      className={`font-bold uppercase leading-tight ${
+                        answer.revealed ? theme.text : 'text-slate-300'
+                      }`}
+                      style={{ 
+                        fontSize: answer.text.length > 30 ? '0.875rem' : answer.text.length > 20 ? '1rem' : '1.25rem'
+                      }}
+                    >
                       {answer.text}
                     </div>
                     {answer.textEn && (
-                      <div className={`text-sm italic ${
-                        answer.revealed ? `${theme.text} opacity-80` : 'text-slate-500'
-                      }`}>
+                      <div 
+                        className={`italic leading-tight mt-1 ${
+                          answer.revealed ? `${theme.text} opacity-80` : 'text-slate-500'
+                        }`}
+                        style={{ 
+                          fontSize: answer.textEn.length > 40 ? '0.7rem' : '0.875rem'
+                        }}
+                      >
                         {answer.textEn}
                       </div>
                     )}

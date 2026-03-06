@@ -5,8 +5,6 @@ import { GameState, Question, Team } from '@/lib/types';
 import { defaultGameState } from '@/lib/default-data';
 import { motion } from 'motion/react';
 import { Sparkles, Heart, Crown } from 'lucide-react';
-import { db } from '@/lib/firebase';
-import { ref, onValue, set } from 'firebase/database';
 
 interface GameContextType {
   gameState: GameState;
@@ -32,32 +30,70 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   const updateGameState = (updates: Partial<GameState>) => {
-    setGameState((prev) => {
-      const newState = { ...prev, ...updates };
-      set(ref(db, 'gameState'), newState);
-      return newState;
-    });
+    setGameState((prev) => ({ ...prev, ...updates }));
   };
 
-  // Load from Firebase on mount and listen for changes
+  // Load from localStorage on mount
   useEffect(() => {
-    const gameStateRef = ref(db, 'gameState');
-    const unsubscribe = onValue(gameStateRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setGameState(data);
-      } else {
-        // If no data in Firebase, initialize with default
-        set(ref(db, 'gameState'), defaultGameState);
-        setGameState(defaultGameState);
+    const saved = localStorage.getItem('chungSucGameState');
+    if (saved) {
+      try {
+        // eslint-disable-next-line
+        setGameState(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to parse saved game state', e);
       }
-      setIsLoaded(true);
-    }, (error) => {
-      console.error('Failed to sync game state from Firebase', error);
-      setIsLoaded(true); // Still load the app even if Firebase fails initially
-    });
+    }
+    setIsLoaded(true);
+  }, []);
 
-    return () => unsubscribe();
+  // Save to localStorage on change
+  useEffect(() => {
+    if (isLoaded) {
+      const currentStateString = JSON.stringify(gameState);
+      const savedStateString = localStorage.getItem('chungSucGameState');
+      // Only write to localStorage if the state has actually changed
+      // This prevents an infinite loop of storage events between tabs
+      if (currentStateString !== savedStateString) {
+        localStorage.setItem('chungSucGameState', currentStateString);
+        
+        // Broadcast the change for immediate sync across tabs
+        const channel = new BroadcastChannel('chungSucGameChannel');
+        channel.postMessage({ type: 'SYNC_STATE', payload: gameState });
+        channel.close();
+      }
+    }
+  }, [gameState, isLoaded]);
+
+  // Sync across tabs
+  useEffect(() => {
+    const channel = new BroadcastChannel('chungSucGameChannel');
+
+    channel.onmessage = (event) => {
+      if (event.data && event.data.type === 'SYNC_STATE') {
+        try {
+          setGameState(event.data.payload);
+        } catch (error) {
+          console.error('Failed to sync game state via BroadcastChannel', error);
+        }
+      }
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'chungSucGameState' && e.newValue) {
+        try {
+          setGameState(JSON.parse(e.newValue));
+        } catch (error) {
+          console.error('Failed to sync game state from other tab', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      channel.close();
+    };
   }, []);
 
   const revealAnswer = (questionId: string, answerId: string) => {
@@ -76,40 +112,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
         return q;
       });
-      const newState = { ...prev, questions: newQuestions, tempScore: prev.tempScore };
-      set(ref(db, 'gameState'), newState);
-      return newState;
+      return { ...prev, questions: newQuestions, tempScore: prev.tempScore };
     });
   };
 
   const addStrike = () => {
-    setGameState((prev) => {
-      const newState = {
-        ...prev,
-        strikes: Math.min(prev.strikes + 1, 3),
-        showStrike: true,
-      };
-      set(ref(db, 'gameState'), newState);
-      
-      // Hide strike after 2 seconds
-      setTimeout(() => {
-        setGameState((current) => {
-          const hiddenState = { ...current, showStrike: false };
-          set(ref(db, 'gameState'), hiddenState);
-          return hiddenState;
-        });
-      }, 2000);
-      
-      return newState;
-    });
+    setGameState((prev) => ({
+      ...prev,
+      strikes: Math.min(prev.strikes + 1, 3),
+      showStrike: true,
+    }));
+    
+    // Hide strike after 2 seconds
+    setTimeout(() => {
+      setGameState((prev) => ({ ...prev, showStrike: false }));
+    }, 2000);
   };
 
   const clearStrikes = () => {
-    setGameState((prev) => {
-      const newState = { ...prev, strikes: 0, showStrike: false };
-      set(ref(db, 'gameState'), newState);
-      return newState;
-    });
+    setGameState((prev) => ({ ...prev, strikes: 0, showStrike: false }));
   };
 
   const awardPoints = (teamId: string) => {
@@ -120,81 +141,55 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
         return t;
       });
-      const newState = { ...prev, teams: newTeams, tempScore: 0, strikes: 0 };
-      set(ref(db, 'gameState'), newState);
-      return newState;
+      return { ...prev, teams: newTeams, tempScore: 0, strikes: 0 };
     });
   };
 
   const nextQuestion = () => {
-    setGameState((prev) => {
-      const newState = {
-        ...prev,
-        currentQuestionIndex: Math.min(prev.currentQuestionIndex + 1, prev.questions.length - 1),
-        tempScore: 0,
-        strikes: 0,
-      };
-      set(ref(db, 'gameState'), newState);
-      return newState;
-    });
+    setGameState((prev) => ({
+      ...prev,
+      currentQuestionIndex: Math.min(prev.currentQuestionIndex + 1, prev.questions.length - 1),
+      tempScore: 0,
+      strikes: 0,
+    }));
   };
 
   const prevQuestion = () => {
-    setGameState((prev) => {
-      const newState = {
-        ...prev,
-        currentQuestionIndex: Math.max(prev.currentQuestionIndex - 1, 0),
-        tempScore: 0,
-        strikes: 0,
-      };
-      set(ref(db, 'gameState'), newState);
-      return newState;
-    });
+    setGameState((prev) => ({
+      ...prev,
+      currentQuestionIndex: Math.max(prev.currentQuestionIndex - 1, 0),
+      tempScore: 0,
+      strikes: 0,
+    }));
   };
 
   const updateTeam = (teamId: string, updates: Partial<Team>) => {
-    setGameState((prev) => {
-      const newState = {
-        ...prev,
-        teams: prev.teams.map((t) => (t.id === teamId ? { ...t, ...updates } : t)),
-      };
-      set(ref(db, 'gameState'), newState);
-      return newState;
-    });
+    setGameState((prev) => ({
+      ...prev,
+      teams: prev.teams.map((t) => (t.id === teamId ? { ...t, ...updates } : t)),
+    }));
   };
 
   const updateQuestion = (questionId: string, updates: Partial<Question>) => {
-    setGameState((prev) => {
-      const newState = {
-        ...prev,
-        questions: prev.questions.map((q) => (q.id === questionId ? { ...q, ...updates } : q)),
-      };
-      set(ref(db, 'gameState'), newState);
-      return newState;
-    });
+    setGameState((prev) => ({
+      ...prev,
+      questions: prev.questions.map((q) => (q.id === questionId ? { ...q, ...updates } : q)),
+    }));
   };
 
   const addQuestion = (question: Question) => {
-    setGameState((prev) => {
-      const newState = {
-        ...prev,
-        questions: [...prev.questions, question],
-      };
-      set(ref(db, 'gameState'), newState);
-      return newState;
-    });
+    setGameState((prev) => ({
+      ...prev,
+      questions: [...prev.questions, question],
+    }));
   };
 
   const deleteQuestion = (questionId: string) => {
-    setGameState((prev) => {
-      const newState = {
-        ...prev,
-        questions: prev.questions.filter((q) => q.id !== questionId),
-        currentQuestionIndex: 0, // Reset to first question to avoid out of bounds
-      };
-      set(ref(db, 'gameState'), newState);
-      return newState;
-    });
+    setGameState((prev) => ({
+      ...prev,
+      questions: prev.questions.filter((q) => q.id !== questionId),
+      currentQuestionIndex: 0, // Reset to first question to avoid out of bounds
+    }));
   };
 
   const resetGame = () => {
@@ -206,7 +201,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       const resetTeams = prev.teams.map(t => ({ ...t, score: 0 }));
 
-      const newState = {
+      return {
         ...prev,
         teams: resetTeams,
         questions: resetQuestions,
@@ -216,8 +211,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         tempScore: 0,
         round: 1,
       };
-      set(ref(db, 'gameState'), newState);
-      return newState;
     });
   };
 

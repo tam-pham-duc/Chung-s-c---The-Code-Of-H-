@@ -60,6 +60,6 @@ export interface GameState {
   soundSettings?: SoundSettings;
   bgmSpeed?: number;
   bgmPlaying?: boolean;
-  specialEffect?: 'confetti' | 'fireworks' | 'applause' | 'alert' | null;
+  specialEffect?: 'confetti' | 'fireworks' | 'applause' | 'alert' | 'steal' | 'wrong' | null;
   announcement?: string | null;
 }

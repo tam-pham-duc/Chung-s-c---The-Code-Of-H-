@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from './GameProvider';
 import { motion, AnimatePresence } from 'motion/react';
-import { Crown, Gem, Heart, Star, Sparkles, Flower2, Eye, EyeOff, Clock, Flame, Play, Pause, FastForward, Rewind, PartyPopper, BellRing, Megaphone, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Crown, Gem, Heart, Star, Sparkles, Flower2, Eye, EyeOff, Clock, Flame, Play, Pause, FastForward, Rewind, PartyPopper, BellRing, Megaphone, ChevronLeft, ChevronRight, Swords, XCircle } from 'lucide-react';
 
 // Re-use the theme generator from GameBoard
 const getAnswerTheme = (index: number) => {
@@ -90,7 +90,7 @@ export default function MCPanel() {
     }
   };
 
-  const triggerEffect = (effect: 'confetti' | 'fireworks' | 'applause' | 'alert') => {
+  const triggerEffect = (effect: 'confetti' | 'fireworks' | 'applause' | 'alert' | 'steal' | 'wrong') => {
     updateGameState({ specialEffect: effect });
     setTimeout(() => {
       updateGameState({ specialEffect: null });
@@ -233,10 +233,24 @@ export default function MCPanel() {
               </button>
               <button
                 onClick={() => triggerEffect('alert')}
-                className="p-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+                className="p-2 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg transition-colors"
                 title="Cảnh báo"
               >
                 <BellRing className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => triggerEffect('steal')}
+                className="p-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-colors"
+                title="Cướp điểm"
+              >
+                <Swords className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => triggerEffect('wrong')}
+                className="p-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+                title="Sai rồi"
+              >
+                <XCircle className="w-4 h-4" />
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useGame } from './GameProvider';
 import { Question, Answer, Team } from '@/lib/types';
-import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload, GripVertical, Music, Music2, MonitorPlay, FastForward, Rewind, PartyPopper, Sparkles, BellRing } from 'lucide-react';
+import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload, GripVertical, Music, Music2, MonitorPlay, FastForward, Rewind, PartyPopper, Sparkles, BellRing, Swords, XCircle } from 'lucide-react';
 import Papa from 'papaparse';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import MCPanel from './MCPanel';
@@ -426,9 +426,27 @@ function ControlTab({ themeColor }: { themeColor: string }) {
                   updateGameState({ specialEffect: 'alert' });
                   setTimeout(() => updateGameState({ specialEffect: null }), 3000);
                 }}
-                className="px-3 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+                className="px-3 py-2 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
               >
                 <BellRing className="w-4 h-4" /> Cảnh báo
+              </button>
+              <button
+                onClick={() => {
+                  updateGameState({ specialEffect: 'steal' });
+                  setTimeout(() => updateGameState({ specialEffect: null }), 5000);
+                }}
+                className="px-3 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+              >
+                <Swords className="w-4 h-4" /> Cướp điểm
+              </button>
+              <button
+                onClick={() => {
+                  updateGameState({ specialEffect: 'wrong' });
+                  setTimeout(() => updateGameState({ specialEffect: null }), 3000);
+                }}
+                className="px-3 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+              >
+                <XCircle className="w-4 h-4" /> Sai rồi
               </button>
             </div>
           </div>

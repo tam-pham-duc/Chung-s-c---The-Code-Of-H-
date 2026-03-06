@@ -433,7 +433,7 @@ export default function GameBoard() {
   // Show Sudden Death Intro Screen
   if (currentQuestion.isSuddenDeath && introPlayedFor !== currentQuestion.id) {
     return (
-      <div className="relative flex flex-col items-center justify-center min-h-screen bg-rose-950 overflow-hidden font-sans">
+      <div className="relative flex flex-col items-center justify-center h-screen bg-rose-950 overflow-hidden font-sans">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-40 pointer-events-none mix-blend-overlay"></div>
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-600/40 via-transparent to-transparent pointer-events-none"></div>
         
@@ -534,12 +534,12 @@ export default function GameBoard() {
       </div>
 
       {/* Scoreboard */}
-      <div className="z-10 flex flex-col items-center w-full max-w-6xl px-4 mb-8">
+      <div className="z-10 flex flex-col items-center w-full max-w-6xl px-4 mb-4">
         {/* Current Points */}
-        <div className="flex flex-col items-center justify-start relative pt-2 mb-6">
-          <div className="h-8 mb-2 flex items-end justify-center w-full">
+        <div className="flex flex-col items-center justify-start relative pt-2 mb-4">
+          <div className="h-6 mb-1 flex items-end justify-center w-full">
             {gameState.isStealing && (
-              <div className="bg-orange-600/80 backdrop-blur text-white px-4 py-1 rounded-full font-bold uppercase tracking-widest border border-orange-400 shadow-[0_0_30px_rgba(234,88,12,0.6)] animate-pulse whitespace-nowrap text-xs">
+              <div className="bg-orange-600/80 backdrop-blur text-white px-4 py-1 rounded-full font-bold uppercase tracking-widest border border-orange-400 shadow-[0_0_30px_rgba(234,88,12,0.6)] animate-pulse whitespace-nowrap text-[10px]">
                 CƠ HỘI CƯỚP ĐIỂM
               </div>
             )}
@@ -549,23 +549,23 @@ export default function GameBoard() {
             initial={{ scale: 1.3, borderColor: '#fcd34d', boxShadow: '0 0 60px rgba(250,204,21,0.8)' }}
             animate={{ scale: 1, borderColor: 'rgba(250,204,21,0.8)', boxShadow: '0 0 40px rgba(250,204,21,0.4)' }}
             transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-            className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 rounded-full w-24 h-24 md:w-28 md:h-28 flex items-center justify-center shrink-0"
+            className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 rounded-full w-20 h-20 md:w-24 md:h-24 flex items-center justify-center shrink-0"
           >
             <motion.span 
               key={`text-${tempScore}`}
               initial={{ scale: 1.2, color: '#fcd34d' }}
               animate={{ scale: 1, color: '#ffffff' }}
               transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-              className="text-4xl md:text-5xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+              className="text-3xl md:text-4xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
             >
               {tempScore}
             </motion.span>
           </motion.div>
-          <div className="mt-3 text-yellow-400/90 font-bold text-xs tracking-[0.2em] uppercase text-center">Điểm Tích Lũy</div>
+          <div className="mt-2 text-yellow-400/90 font-bold text-[10px] tracking-[0.2em] uppercase text-center">Điểm Tích Lũy</div>
         </div>
 
         {/* Teams */}
-        <div className={`grid w-full gap-4 md:gap-8 grid-cols-1 ${
+        <div className={`grid w-full gap-3 md:gap-6 grid-cols-1 ${
           {
             2: 'sm:grid-cols-2',
             3: 'sm:grid-cols-3',
@@ -574,26 +574,26 @@ export default function GameBoard() {
           }[gameState.numberOfTeams || 2] || 'sm:grid-cols-2'
         }`}>
           {teams.slice(0, gameState.numberOfTeams || 2).map((team) => (
-            <div key={team.id} className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === team.id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative mt-6`}>
-              <div className="absolute -top-5 w-full flex justify-center">
+            <div key={team.id} className={`flex flex-col items-center bg-white/10 backdrop-blur-md border-2 ${gameState.controllingTeamId === team.id ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-pink-300/30'} rounded-2xl p-3 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 relative mt-4`}>
+              <div className="absolute -top-4 w-full flex justify-center">
                 {gameState.controllingTeamId === team.id && (
-                  <div className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-bounce whitespace-nowrap">
+                  <div className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-lg animate-bounce whitespace-nowrap">
                     Đang kiểm soát
                   </div>
                 )}
                 {gameState.isStealing && gameState.stealingTeamId === team.id && (
-                  <div className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg animate-pulse whitespace-nowrap">
+                  <div className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-lg animate-pulse whitespace-nowrap">
                     Đang cướp điểm
                   </div>
                 )}
               </div>
-              <h3 className="text-xl md:text-2xl font-bold text-pink-100 mb-2 uppercase text-center tracking-wide w-full truncate px-2">{team.name}</h3>
+              <h3 className="text-lg md:text-xl font-bold text-pink-100 mb-1 uppercase text-center tracking-wide w-full truncate px-2">{team.name}</h3>
               <motion.div 
                 key={team.score}
                 initial={{ scale: 2, y: -30, color: '#ffffff', textShadow: '0 0 20px #ffffff, 0 0 40px #facc15' }}
                 animate={{ scale: 1, y: 0, color: '#facc15', textShadow: '0 4px 8px rgba(0,0,0,0.8)' }}
                 transition={{ type: 'spring', stiffness: 400, damping: 10, duration: 0.8 }}
-                className="text-4xl md:text-5xl font-black text-yellow-400"
+                className="text-3xl md:text-4xl font-black text-yellow-400"
               >
                 {team.score}
               </motion.div>
@@ -608,17 +608,17 @@ export default function GameBoard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="z-10 w-full max-w-4xl bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-indigo-900/80 backdrop-blur-md border border-white/20 rounded-2xl p-6 md:p-8 mb-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+        className="z-10 w-full max-w-4xl bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-indigo-900/80 backdrop-blur-md border border-white/20 rounded-2xl p-4 md:p-6 mb-4 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
       >
-        <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-relaxed drop-shadow-md">
+        <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white leading-relaxed drop-shadow-md">
           {currentQuestion.text}
         </h3>
         {currentQuestion.textEn && (
-          <h4 className="text-lg md:text-xl lg:text-2xl font-medium text-pink-200 mt-2 leading-relaxed drop-shadow-md italic">
+          <h4 className="text-base md:text-lg lg:text-xl font-medium text-pink-200 mt-1 leading-relaxed drop-shadow-md italic">
             {currentQuestion.textEn}
           </h4>
         )}
-        <div className="mt-4 text-pink-300 font-medium tracking-wider uppercase text-xs md:text-sm">
+        <div className="mt-2 text-pink-300 font-medium tracking-wider uppercase text-[10px] md:text-xs">
           {currentQuestion.isSuddenDeath ? (
             <span className="text-rose-400 font-bold animate-pulse">✨ Câu hỏi phụ - Sudden Death ✨</span>
           ) : (
@@ -628,12 +628,12 @@ export default function GameBoard() {
       </motion.div>
 
       {/* Answers Grid */}
-      <div className="z-10 w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 px-4 mb-24">
+      <div className="z-10 w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 px-4 mb-8">
         {displayAnswers.map((answer, index) => {
           const theme = getAnswerTheme(index);
           
           return (
-            <div key={answer.id} className="relative h-20 perspective-1000 group hover:-translate-y-1 transition-transform duration-300">
+            <div key={answer.id} className="relative h-14 md:h-16 perspective-1000 group hover:-translate-y-1 transition-transform duration-300">
               <motion.div
                 className="w-full h-full relative preserve-3d cursor-default"
                 initial={false}
@@ -645,7 +645,7 @@ export default function GameBoard() {
               >
                 {/* Front (Hidden) */}
                 <div className="absolute w-full h-full backface-hidden bg-gradient-to-r from-indigo-800/80 to-purple-800/80 backdrop-blur-sm border border-white/20 group-hover:border-white/50 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] rounded-xl flex items-center justify-center shadow-lg transition-all duration-300">
-                  <div className="w-12 h-12 rounded-full bg-white/10 border border-white/30 flex items-center justify-center text-2xl font-bold text-white/90 shadow-inner">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 border border-white/30 flex items-center justify-center text-xl md:text-2xl font-bold text-white/90 shadow-inner">
                     {index + 1}
                   </div>
                 </div>
@@ -662,14 +662,14 @@ export default function GameBoard() {
                       animate={{ opacity: answer.revealed ? 1 : 0, scale: answer.revealed ? 1 : 0.8 }}
                       transition={{ duration: 0.4, delay: 0.15 }}
                     >
-                      <div className={`flex items-center justify-center w-16 h-full bg-gradient-to-br ${theme.gradient} border-r border-white/50 shrink-0`}>
+                      <div className={`flex items-center justify-center w-12 md:w-16 h-full bg-gradient-to-br ${theme.gradient} border-r border-white/50 shrink-0`}>
                         {theme.icon}
                       </div>
-                      <div className={`flex-grow px-4 md:px-6 py-1 flex flex-col justify-center min-w-0`}>
+                      <div className={`flex-grow px-3 md:px-6 py-1 flex flex-col justify-center min-w-0`}>
                         <div 
                           className={`font-bold ${theme.text} uppercase leading-tight`}
                           style={{ 
-                            fontSize: answer.text.length > 30 ? '1rem' : answer.text.length > 20 ? '1.25rem' : '1.5rem'
+                            fontSize: answer.text.length > 30 ? '0.875rem' : answer.text.length > 20 ? '1rem' : '1.25rem'
                           }}
                         >
                           {answer.text}
@@ -678,19 +678,19 @@ export default function GameBoard() {
                           <div 
                             className={`font-medium ${theme.text} opacity-80 italic leading-tight mt-0.5`}
                             style={{ 
-                              fontSize: answer.textEn.length > 40 ? '0.75rem' : '0.875rem'
+                              fontSize: answer.textEn.length > 40 ? '0.65rem' : '0.75rem'
                             }}
                           >
                             {answer.textEn}
                           </div>
                         )}
                       </div>
-                      <div className={`w-20 md:w-24 h-full bg-gradient-to-br ${theme.gradient} flex items-center justify-center text-2xl md:text-3xl font-black text-white drop-shadow-md border-l border-white/50 shrink-0`}>
+                      <div className={`w-16 md:w-20 h-full bg-gradient-to-br ${theme.gradient} flex items-center justify-center text-xl md:text-2xl font-black text-white drop-shadow-md border-l border-white/50 shrink-0`}>
                         {answer.points}
                       </div>
                     </motion.div>
                   ) : (
-                    <div className="flex-grow flex items-center justify-center text-gray-300 text-2xl font-bold">
+                    <div className="flex-grow flex items-center justify-center text-gray-300 text-xl font-bold">
                       ---
                     </div>
                   )}
@@ -853,6 +853,37 @@ export default function GameBoard() {
             transition={{ duration: 1, repeat: 3 }}
             className="fixed inset-0 z-50 pointer-events-none bg-red-600/30"
           />
+        )}
+        {gameState.specialEffect === 'steal' && (
+          <motion.div
+            initial={{ scale: 0, rotate: -10, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            exit={{ scale: 1.5, opacity: 0 }}
+            transition={{ type: "spring", bounce: 0.6 }}
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-black/40 backdrop-blur-sm"
+          >
+            <div className="flex flex-col items-center">
+              <div className="text-7xl md:text-[10rem] font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-400 to-red-600 drop-shadow-[0_10px_30px_rgba(234,88,12,0.8)] uppercase tracking-widest mb-4">
+                CƯỚP ĐIỂM
+              </div>
+              <div className="text-3xl md:text-5xl font-bold text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] uppercase tracking-widest animate-pulse">
+                CƠ HỘI ĐỔI ĐỜI!
+              </div>
+            </div>
+          </motion.div>
+        )}
+        {gameState.specialEffect === 'wrong' && (
+          <motion.div
+            initial={{ scale: 2, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15 }}
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-red-900/40 backdrop-blur-sm"
+          >
+            <div className="text-9xl md:text-[15rem] font-black text-red-500 drop-shadow-[0_0_50px_rgba(239,68,68,0.8)]">
+              X
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

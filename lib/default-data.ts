@@ -50,6 +50,10 @@ export const defaultGameState: GameState = {
   timerDuration: 30,
   timerStartedAt: null,
   showTimer: false,
+  bgmSpeed: 1,
+  bgmPlaying: false,
+  specialEffect: null,
+  announcement: null,
   soundSettings: {
     bgmUrl: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
     bgmVolume: 0.5,

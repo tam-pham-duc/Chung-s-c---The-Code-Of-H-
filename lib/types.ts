@@ -58,4 +58,8 @@ export interface GameState {
   timerStartedAt: number | null;
   showTimer: boolean;
   soundSettings?: SoundSettings;
+  bgmSpeed?: number;
+  bgmPlaying?: boolean;
+  specialEffect?: 'confetti' | 'fireworks' | 'applause' | 'alert' | null;
+  announcement?: string | null;
 }

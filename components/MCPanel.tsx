@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from './GameProvider';
 import { motion, AnimatePresence } from 'motion/react';
-import { Crown, Gem, Heart, Star, Sparkles, Flower2, Eye, EyeOff, Clock, Flame } from 'lucide-react';
+import { Crown, Gem, Heart, Star, Sparkles, Flower2, Eye, EyeOff, Clock, Flame, Play, Pause, FastForward, Rewind, PartyPopper, BellRing, Megaphone, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Re-use the theme generator from GameBoard
 const getAnswerTheme = (index: number) => {
@@ -66,7 +66,7 @@ const getAnswerTheme = (index: number) => {
 };
 
 export default function MCPanel() {
-  const { gameState, revealAnswer, nextQuestion } = useGame();
+  const { gameState, revealAnswer, nextQuestion, prevQuestion, updateGameState } = useGame();
   const { questions, currentQuestionIndex, teams, tempScore, strikes, showStrike } = gameState;
   const currentQuestion = questions[currentQuestionIndex];
   const [currentTime, setCurrentTime] = useState(() => Date.now());
@@ -82,6 +82,31 @@ export default function MCPanel() {
     ? Math.max(0, (gameState.timerDuration || 30) - Math.floor((currentTime - gameState.timerStartedAt) / 1000))
     : (gameState.timerDuration || 30);
 
+  const revealNextAnswer = () => {
+    if (!currentQuestion) return;
+    const nextUnrevealed = currentQuestion.answers.find(a => !a.revealed);
+    if (nextUnrevealed) {
+      revealAnswer(currentQuestion.id, nextUnrevealed.id);
+    }
+  };
+
+  const triggerEffect = (effect: 'confetti' | 'fireworks' | 'applause' | 'alert') => {
+    updateGameState({ specialEffect: effect });
+    setTimeout(() => {
+      updateGameState({ specialEffect: null });
+    }, 5000); // Reset after 5s
+  };
+
+  const toggleBgm = () => {
+    updateGameState({ bgmPlaying: !gameState.bgmPlaying });
+  };
+
+  const changeBgmSpeed = (delta: number) => {
+    const currentSpeed = gameState.bgmSpeed || 1;
+    const newSpeed = Math.max(0.5, Math.min(2, currentSpeed + delta));
+    updateGameState({ bgmSpeed: newSpeed });
+  };
+
   if (!currentQuestion) {
     return <div className="flex items-center justify-center h-full min-h-[50vh] bg-slate-900 text-white text-2xl">Chưa có câu hỏi nào</div>;
   }
@@ -95,6 +120,9 @@ export default function MCPanel() {
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">Màn Hình MC</h1>
             <div className="text-slate-400 text-sm flex items-center gap-2">
+              <span className="px-2 py-1 bg-slate-700 rounded text-xs font-medium uppercase tracking-wider">
+                Câu {currentQuestionIndex + 1} / {questions.length}
+              </span>
               <span className="px-2 py-1 bg-slate-700 rounded text-xs font-medium uppercase tracking-wider">
                 {currentQuestion.isSuddenDeath ? 'Sudden Death' : `Vòng ${currentQuestion.round}`}
               </span>
@@ -118,13 +146,99 @@ export default function MCPanel() {
                 {displayTime}s
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  prevQuestion();
+                  updateGameState({ controllingTeamId: null, stealingTeamId: null, isStealing: false, strikes: 0 });
+                }}
+                disabled={currentQuestionIndex === 0}
+                className="px-4 py-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-xl font-bold transition-colors shadow-lg flex items-center gap-1"
+              >
+                <ChevronLeft className="w-5 h-5" /> Câu Trước
+              </button>
+              <button
+                onClick={() => {
+                  nextQuestion();
+                  updateGameState({ controllingTeamId: null, stealingTeamId: null, isStealing: false, strikes: 0 });
+                }}
+                disabled={currentQuestionIndex >= questions.length - 1}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-xl font-bold transition-colors shadow-lg flex items-center gap-1"
+              >
+                Câu Tiếp <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+          <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+            <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">Mở Đáp Án</span>
             <button
-              onClick={nextQuestion}
-              disabled={currentQuestionIndex >= questions.length - 1}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-xl font-bold transition-colors shadow-lg"
+              onClick={revealNextAnswer}
+              disabled={!currentQuestion.answers.some(a => !a.revealed)}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg font-bold transition-colors flex items-center gap-2"
             >
-              Câu Tiếp Theo
+              <Eye className="w-4 h-4" /> Mở Theo Lượt
             </button>
+          </div>
+
+          <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+            <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">Nhạc Nền</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => changeBgmSpeed(-0.25)}
+                className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                title="Chậm lại"
+              >
+                <Rewind className="w-4 h-4" />
+              </button>
+              <button
+                onClick={toggleBgm}
+                className={`p-2 ${gameState.bgmPlaying ? 'bg-amber-600 hover:bg-amber-500' : 'bg-emerald-600 hover:bg-emerald-500'} text-white rounded-lg transition-colors`}
+                title={gameState.bgmPlaying ? "Tạm dừng" : "Phát nhạc"}
+              >
+                {gameState.bgmPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={() => changeBgmSpeed(0.25)}
+                className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                title="Nhanh hơn"
+              >
+                <FastForward className="w-4 h-4" />
+              </button>
+              <span className="text-xs font-mono text-slate-400 w-8 text-center">
+                {gameState.bgmSpeed?.toFixed(2) || '1.00'}x
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+            <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">Hiệu Ứng</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => triggerEffect('confetti')}
+                className="p-2 bg-pink-600 hover:bg-pink-500 text-white rounded-lg transition-colors"
+                title="Pháo giấy"
+              >
+                <PartyPopper className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => triggerEffect('applause')}
+                className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+                title="Vỗ tay"
+              >
+                <Sparkles className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => triggerEffect('alert')}
+                className="p-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+                title="Cảnh báo"
+              >
+                <BellRing className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 

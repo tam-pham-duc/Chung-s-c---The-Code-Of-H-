@@ -306,8 +306,8 @@ export default function GameBoard() {
   const [introPlayedFor, setIntroPlayedFor] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [showCelebration, setShowCelebration] = useState<string | null>(null);
-  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { updateGameState } = useGame();
   
   const displayTime = gameState.timerStartedAt 
     ? Math.max(0, (gameState.timerDuration || 30) - Math.floor((currentTime - gameState.timerStartedAt) / 1000))
@@ -417,13 +417,14 @@ export default function GameBoard() {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = gameState.soundSettings?.bgmVolume ?? 0.5;
-      if (isMusicPlaying) {
+      audioRef.current.playbackRate = gameState.bgmSpeed ?? 1.0;
+      if (gameState.bgmPlaying) {
         audioRef.current.play().catch(e => console.error("Audio play failed:", e));
       } else {
         audioRef.current.pause();
       }
     }
-  }, [isMusicPlaying, gameState.soundSettings?.bgmVolume]);
+  }, [gameState.bgmPlaying, gameState.soundSettings?.bgmVolume, gameState.bgmSpeed]);
 
   if (!currentQuestion) {
     return <div className="flex items-center justify-center h-screen text-white text-2xl">Chưa có câu hỏi nào</div>;
@@ -482,15 +483,15 @@ export default function GameBoard() {
 
       {/* Music Toggle Button */}
       <button
-        onClick={() => setIsMusicPlaying(!isMusicPlaying)}
+        onClick={() => updateGameState({ bgmPlaying: !gameState.bgmPlaying })}
         className={`fixed top-4 right-4 z-50 p-3 rounded-full backdrop-blur-md border-2 transition-all duration-300 shadow-lg ${
-          isMusicPlaying 
+          gameState.bgmPlaying 
             ? 'bg-pink-500/20 border-pink-400 text-pink-200 shadow-[0_0_15px_rgba(244,114,182,0.5)]' 
             : 'bg-white/5 border-white/20 text-white/50 hover:bg-white/10'
         }`}
-        title={isMusicPlaying ? "Tắt nhạc nền" : "Bật nhạc nền"}
+        title={gameState.bgmPlaying ? "Tắt nhạc nền" : "Bật nhạc nền"}
       >
-        {isMusicPlaying ? <Music className="w-6 h-6 animate-pulse" /> : <Music2 className="w-6 h-6" />}
+        {gameState.bgmPlaying ? <Music className="w-6 h-6 animate-pulse" /> : <Music2 className="w-6 h-6" />}
       </button>
 
       {/* Header & Timer */}
@@ -754,7 +755,7 @@ export default function GameBoard() {
 
       {/* Celebration Overlay */}
       <AnimatePresence>
-        {showCelebration && (
+        {(showCelebration || gameState.specialEffect === 'confetti') && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -791,13 +792,14 @@ export default function GameBoard() {
               />
             ))}
 
-            <motion.div
-              initial={{ scale: 0.5, y: 50, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 1.2, opacity: 0 }}
-              transition={{ type: 'spring', bounce: 0.5, duration: 0.8 }}
-              className="relative bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 p-1 rounded-3xl shadow-[0_0_100px_rgba(250,204,21,0.8)]"
-            >
+            {showCelebration && (
+              <motion.div
+                initial={{ scale: 0.5, y: 50, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 1.2, opacity: 0 }}
+                transition={{ type: 'spring', bounce: 0.5, duration: 0.8 }}
+                className="relative bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 p-1 rounded-3xl shadow-[0_0_100px_rgba(250,204,21,0.8)]"
+              >
               <div className="bg-gradient-to-br from-indigo-950 to-purple-950 rounded-[22px] p-12 flex flex-col items-center text-center border-4 border-yellow-400/50">
                 <motion.div
                   animate={{ 
@@ -824,7 +826,33 @@ export default function GameBoard() {
                 </div>
               </div>
             </motion.div>
+            )}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Other Special Effects */}
+      <AnimatePresence>
+        {gameState.specialEffect === 'applause' && (
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 1.5, opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+          >
+            <div className="text-6xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] uppercase tracking-widest animate-pulse">
+              VỖ TAY!
+            </div>
+          </motion.div>
+        )}
+        {gameState.specialEffect === 'alert' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.5, 0, 0.5, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, repeat: 3 }}
+            className="fixed inset-0 z-50 pointer-events-none bg-red-600/30"
+          />
         )}
       </AnimatePresence>
     </div>

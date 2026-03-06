@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useGame } from './GameProvider';
 import { Question, Answer, Team } from '@/lib/types';
-import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload, GripVertical, Music, Music2, MonitorPlay } from 'lucide-react';
+import { Settings, Users, HelpCircle, Play, Pause, Clock, X, Plus, Trash2, Save, RotateCcw, Eye, EyeOff, Palette, ArrowLeft, Download, Upload, GripVertical, Music, Music2, MonitorPlay, FastForward, Rewind, PartyPopper, Sparkles, BellRing } from 'lucide-react';
 import Papa from 'papaparse';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import MCPanel from './MCPanel';
@@ -348,6 +348,89 @@ function ControlTab({ themeColor }: { themeColor: string }) {
             >
               <RotateCcw className="w-4 h-4" /> Làm mới
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Effects & Music Controls */}
+      <div className="bg-purple-50 p-6 rounded-lg border border-purple-100">
+        <h3 className="text-lg font-bold text-purple-800 flex items-center gap-2 mb-4">
+          <Sparkles className="w-5 h-5" /> Hiệu ứng & Nhạc nền
+        </h3>
+        
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex-1">
+            <h4 className="text-sm font-bold text-purple-900 mb-2">Nhạc nền GameBoard</h4>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => updateGameState({ bgmPlaying: !gameState.bgmPlaying })}
+                className={`p-2 rounded-lg transition-colors ${
+                  gameState.bgmPlaying ? 'bg-pink-600 hover:bg-pink-700 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }`}
+                title={gameState.bgmPlaying ? "Tạm dừng nhạc" : "Phát nhạc"}
+              >
+                {gameState.bgmPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              </button>
+              
+              <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-purple-200">
+                <button
+                  onClick={() => {
+                    const currentSpeed = gameState.bgmSpeed || 1;
+                    updateGameState({ bgmSpeed: Math.max(0.5, currentSpeed - 0.1) });
+                  }}
+                  className="p-1.5 hover:bg-purple-100 text-purple-700 rounded transition-colors"
+                  title="Chậm lại"
+                >
+                  <Rewind className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    const currentSpeed = gameState.bgmSpeed || 1;
+                    updateGameState({ bgmSpeed: Math.min(2, currentSpeed + 0.1) });
+                  }}
+                  className="p-1.5 hover:bg-purple-100 text-purple-700 rounded transition-colors"
+                  title="Nhanh hơn"
+                >
+                  <FastForward className="w-4 h-4" />
+                </button>
+                <span className="text-sm font-mono text-purple-800 w-12 text-center font-medium">
+                  {gameState.bgmSpeed?.toFixed(2) || '1.00'}x
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex-1">
+            <h4 className="text-sm font-bold text-purple-900 mb-2">Hiệu ứng màn hình</h4>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  updateGameState({ specialEffect: 'confetti' });
+                  setTimeout(() => updateGameState({ specialEffect: null }), 5000);
+                }}
+                className="px-3 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+              >
+                <PartyPopper className="w-4 h-4" /> Pháo giấy
+              </button>
+              <button
+                onClick={() => {
+                  updateGameState({ specialEffect: 'applause' });
+                  setTimeout(() => updateGameState({ specialEffect: null }), 3000);
+                }}
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+              >
+                <Sparkles className="w-4 h-4" /> Vỗ tay
+              </button>
+              <button
+                onClick={() => {
+                  updateGameState({ specialEffect: 'alert' });
+                  setTimeout(() => updateGameState({ specialEffect: null }), 3000);
+                }}
+                className="px-3 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+              >
+                <BellRing className="w-4 h-4" /> Cảnh báo
+              </button>
+            </div>
           </div>
         </div>
       </div>
